@@ -3,7 +3,7 @@ build:
 complexity:
   TooManyFunctions:
     active: true
-    excludes: ['**/HarnessTraceListener.kt'] # porter 类职责单一，10 个小私有方法是形态本身（定向豁免替代 Phase 0 全局关，Phase 1 终审修复项）
+    excludes: ['**/HarnessTraceListener.kt', '**/src/test/**/*.kt'] # porter 类职责单一豁免同前；测试类多 @Test 方法即形态本身（逐测一行为一断言），测试类豁免 2026-10-19 会话持久化切片
 naming:
   FunctionNaming:
     ignoreAnnotated: ['Composable'] # Compose 官方惯例：UI 组件函数 PascalCase（AOSP/Compose 指南），定向豁免 2026-10-19 登录切片

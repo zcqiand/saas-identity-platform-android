@@ -4,6 +4,7 @@ import io.xr.harness.core.AuthError
 import io.xr.harness.core.LoginOutcome
 import io.xr.harness.core.SessionState
 import io.xr.harness.core.SessionStore
+import io.xr.harness.core.WhoamiUser
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -20,7 +21,7 @@ sealed interface AuthPhase {
 
 /**
  * 登录 ViewModel（swift AuthViewModel 同构）：单向数据流 + Seams 闭包注入。 VM 不摸生成 client——真连细节全在 seam 后（App 层
- * loginSeam），单测用 fake seam（ADR-0048 姿态）。
+ * loginSeam），单测用 fake seam（ADR-0048 姿态）。restore() 启动自愈：有 token 才乐观 Ready，whoami 失败即清密回登录。
  */
 class AuthViewModel(
     private val store: SessionStore,
@@ -32,6 +33,7 @@ class AuthViewModel(
             throw IllegalStateException("seam 未注入: login")
           },
       val logout: suspend () -> Unit = { throw IllegalStateException("seam 未注入: logout") },
+      val whoami: suspend () -> WhoamiUser? = { throw IllegalStateException("seam 未注入: whoami") },
       val switchTenant: suspend (tenantId: String) -> Unit = { _ ->
         throw IllegalStateException("seam 未注入: switchTenant")
       },
@@ -46,6 +48,9 @@ class AuthViewModel(
   private val _session = MutableStateFlow(store.state)
   val session: StateFlow<SessionState> = _session.asStateFlow()
 
+  private val _user = MutableStateFlow<WhoamiUser?>(null)
+  val user: StateFlow<WhoamiUser?> = _user.asStateFlow()
+
   suspend fun login(username: String, password: String): Boolean {
     val clientId = store.clientId
     val name = username.trim()
@@ -57,7 +62,12 @@ class AuthViewModel(
         }
     return when (outcome) {
       is LoginOutcome.Success -> {
-        store.adoptLogin(outcome.username, outcome.tenantId)
+        store.adoptLogin(
+            outcome.username,
+            outcome.tenantId,
+            outcome.accessToken,
+            outcome.refreshToken,
+        )
         _session.value = store.state
         _phase.value = AuthPhase.Idle
         true
@@ -67,6 +77,47 @@ class AuthViewModel(
         false
       }
     }
+  }
+
+  /** 启动自愈：持久化会话先乐观上屏，whoami 校验——失败（401/网络）清密回 needsLogin（不静默留死会话）。 */
+  suspend fun restore() {
+    _session.value = store.state
+    if (store.state !is SessionState.Ready) {
+      return
+    }
+    val who =
+        try {
+          seams.whoami()
+        } catch (e: CancellationException) {
+          throw e
+        } catch (e: Exception) {
+          null
+        }
+    if (who == null) {
+      store.clearSession()
+      _session.value = store.state
+      return
+    }
+    _user.value = who
+  }
+
+  suspend fun logout() {
+    runCatching { seams.logout() }
+    store.clearSession()
+    _user.value = null
+    _session.value = store.state
+    _phase.value = AuthPhase.Idle
+  }
+
+  /** 回到配置页（清 clientId 一起清，swift 语义：重配即全清）。 */
+  fun reconfigure() {
+    store.clearConfig()
+    _session.value = store.state
+  }
+
+  /** 配置页保存后由 UI 调：store 直改不走 VM，状态流需手动对齐。 */
+  fun refreshSession() {
+    _session.value = store.state
   }
 
   /** 真调 seam：Busy 置位 + 异常分型归一（取消保持取消；AuthError 直接失败；其余归 Unreachable）。 */
@@ -81,23 +132,5 @@ class AuthViewModel(
     } catch (e: Exception) {
       LoginOutcome.Failure(AuthError.Unreachable(e))
     }
-  }
-
-  suspend fun logout() {
-    runCatching { seams.logout() }
-    store.clearSession()
-    _session.value = store.state
-    _phase.value = AuthPhase.Idle
-  }
-
-  /** 回到配置页（清 clientId 一起清，swift 语义：重配即全清）。 */
-  fun reconfigure() {
-    store.clearConfig()
-    _session.value = store.state
-  }
-
-  /** 配置页保存后由 UI 调：store 直改不走 VM，状态流需手动对齐。 */
-  fun refreshSession() {
-    _session.value = store.state
   }
 }

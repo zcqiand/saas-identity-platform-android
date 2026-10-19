@@ -5,15 +5,18 @@ import io.xr.harness.core.LoginOutcome
 import io.xr.harness.core.PreferencesStore
 import io.xr.harness.core.SessionState
 import io.xr.harness.core.SessionStore
+import io.xr.harness.core.TokenStoring
+import io.xr.harness.core.WhoamiUser
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
 /** AuthViewModel fake-seam JVM 单测（swift AuthViewModelTests 同构）：不真连，ktor ADR-0048 姿态。 */
 class AuthViewModelTest {
 
-  private class MemPrefs : PreferencesStore {
+  class MemPrefs : PreferencesStore {
     val map = mutableMapOf<String, String>()
 
     override fun getString(key: String): String? = map[key]
@@ -27,11 +30,27 @@ class AuthViewModelTest {
     }
   }
 
+  class MemTokens : TokenStoring {
+    var access: String? = null
+    var refresh: String? = null
+
+    override fun loadAccess(): String? = access
+
+    override fun loadRefresh(): String? = refresh
+
+    override fun save(accessToken: String?, refreshToken: String?) {
+      access = accessToken
+      refresh = refreshToken
+    }
+  }
+
   private fun configuredStore(): SessionStore =
-      SessionStore(MemPrefs()).apply { saveConfig("http://10.0.2.2:5104", "saas-android") }
+      SessionStore(MemPrefs(), MemTokens()).apply {
+        saveConfig("http://10.0.2.2:5104", "saas-android")
+      }
 
   @Test
-  fun `login success adopts session and returns true`() {
+  fun `login success adopts session with tokens and returns true`() {
     val store = configuredStore()
     var seenClientId: String? = null
     val seams =
@@ -39,7 +58,12 @@ class AuthViewModelTest {
             login = { username, _, clientId ->
               assertEquals("alice", username)
               seenClientId = clientId
-              LoginOutcome.Success(username = "alice", accessToken = "tok", tenantId = "t-1")
+              LoginOutcome.Success(
+                  username = "alice",
+                  accessToken = "tok",
+                  refreshToken = "ref",
+                  tenantId = "t-1",
+              )
             },
         )
     val vm = AuthViewModel(store, seams)
@@ -98,18 +122,15 @@ class AuthViewModelTest {
     assertTrue((vm.phase.value as AuthPhase.Failed).message.contains("无法连接"))
   }
 
-  /** 非 AuthError 的任意异常样本（detekt 禁测试里抛泛 RuntimeException，自定专用型）。 */
-  private class BoomError(message: String) : Exception(message)
-
   @Test
   fun `clientId unconfigured fails fast without calling seam`() {
-    val store = SessionStore(MemPrefs())
+    val store = SessionStore(MemPrefs(), MemTokens())
     var called = false
     val seams =
         AuthViewModel.Seams(
             login = { _, _, _ ->
               called = true
-              LoginOutcome.Success("alice", "tok", null)
+              LoginOutcome.Success("alice", "tok", null, null)
             },
         )
     val vm = AuthViewModel(store, seams)
@@ -129,7 +150,7 @@ class AuthViewModelTest {
         AuthViewModel.Seams(
             login = { _, _, _ ->
               called = true
-              LoginOutcome.Success("alice", "tok", null)
+              LoginOutcome.Success("alice", "tok", null, null)
             },
         )
     val vm = AuthViewModel(store, seams)
@@ -142,23 +163,83 @@ class AuthViewModelTest {
   }
 
   @Test
-  fun `logout clears session back to needsLogin`() {
+  fun `restore with valid token and whoami stays ready and publishes user`() {
     val store = configuredStore()
-    store.adoptLogin("alice", "t-1")
-    var logoutCalled = false
-    val seams = AuthViewModel.Seams(logout = { logoutCalled = true })
+    store.adoptLogin("alice", "t-1", "tok-1", "ref-1")
+    var whoamiCalled = false
+    val seams =
+        AuthViewModel.Seams(
+            whoami = {
+              whoamiCalled = true
+              WhoamiUser(username = "alice", displayName = "Alice", tenantId = "t-9")
+            },
+        )
     val vm = AuthViewModel(store, seams)
+
+    kotlinx.coroutines.runBlocking { vm.restore() }
+
+    assertTrue(whoamiCalled)
+    assertEquals(SessionState.Ready(username = "alice", tenantId = "t-1"), vm.session.value)
+    assertEquals(WhoamiUser("alice", "Alice", "t-9"), vm.user.value)
+  }
+
+  @Test
+  fun `restore with invalid session clears to needsLogin`() {
+    val store = configuredStore()
+    store.adoptLogin("alice", "t-1", "stale-tok", null)
+    val seams = AuthViewModel.Seams(whoami = { null })
+    val vm = AuthViewModel(store, seams)
+
+    kotlinx.coroutines.runBlocking { vm.restore() }
+
+    assertEquals(SessionState.NeedsLogin, vm.session.value)
+    assertNull(vm.user.value)
+  }
+
+  @Test
+  fun `restore without session skips whoami`() {
+    val store = configuredStore()
+    var whoamiCalled = false
+    val seams =
+        AuthViewModel.Seams(
+            whoami = {
+              whoamiCalled = true
+              WhoamiUser("alice", null, null)
+            },
+        )
+    val vm = AuthViewModel(store, seams)
+
+    kotlinx.coroutines.runBlocking { vm.restore() }
+
+    assertFalse(whoamiCalled)
+    assertEquals(SessionState.NeedsLogin, vm.session.value)
+  }
+
+  @Test
+  fun `logout clears session tokens and user`() {
+    val store = configuredStore()
+    store.adoptLogin("alice", "t-1", "tok-1", "ref-1")
+    var logoutCalled = false
+    val seams =
+        AuthViewModel.Seams(
+            logout = { logoutCalled = true },
+            whoami = { WhoamiUser("alice", null, "t-1") },
+        )
+    val vm = AuthViewModel(store, seams)
+    kotlinx.coroutines.runBlocking { vm.restore() }
+    assertEquals(WhoamiUser("alice", null, "t-1"), vm.user.value)
 
     kotlinx.coroutines.runBlocking { vm.logout() }
 
     assertTrue(logoutCalled)
     assertEquals(SessionState.NeedsLogin, vm.session.value)
+    assertNull(vm.user.value)
   }
 
   @Test
   fun `reconfigure clears config back to needsSetup`() {
     val store = configuredStore()
-    store.adoptLogin("alice", null)
+    store.adoptLogin("alice", null, "tok-1", null)
     val vm = AuthViewModel(store)
 
     vm.reconfigure()
@@ -166,3 +247,6 @@ class AuthViewModelTest {
     assertEquals(SessionState.NeedsSetup, vm.session.value)
   }
 }
+
+/** 非 AuthError 的任意异常样本（detekt 禁测试里抛泛 RuntimeException，自定专用型）。 */
+private class BoomError(message: String) : Exception(message)

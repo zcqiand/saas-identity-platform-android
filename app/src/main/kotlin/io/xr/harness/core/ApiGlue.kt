@@ -19,6 +19,8 @@ sealed class AuthError(message: String) : Exception(message) {
 
   class Locked : AuthError("尝试次数过多，账号已锁定，请稍后再试")
 
+  class SessionExpired : AuthError("登录已过期，请重新登录")
+
   class Server(message: String) : AuthError(message)
 
   class Unreachable(cause: Throwable) :
@@ -26,18 +28,28 @@ sealed class AuthError(message: String) : Exception(message) {
 }
 
 sealed interface LoginOutcome {
-  data class Success(val username: String, val accessToken: String?, val tenantId: String?) :
-      LoginOutcome
+  /** accessToken 必非空（seam 对 null 显式失败，禁静默收编空会话）；refreshToken 可空。 */
+  data class Success(
+      val username: String,
+      val accessToken: String,
+      val refreshToken: String?,
+      val tenantId: String?,
+  ) : LoginOutcome
 
   data class Failure(val error: AuthError) : LoginOutcome
 }
 
-/** token 内存持有（swift TokenStoring 的 Android 对应位；持久化归后刀）。 */
+/** whoami 归一结果（swift CurrentUser 展示位）：失败由 seam 返回 null，不兜底字面量。 */
+data class WhoamiUser(val username: String, val displayName: String?, val tenantId: String?)
+
+/** token 内存持有（进程内即时生效位；持久化归 TokenStoring，启动时由 UI 预载进来）。 */
 class TokenHolder {
   @Volatile var accessToken: String? = null
+
+  @Volatile var refreshToken: String? = null
 }
 
-/** 组合根（swift APIClient 同构）：normalize + 生成 ApiClient 组装，手写代码零手写 API 面（§4）。 */
+/** 组合根（swift APIClient 同构）：normalize + 生成 Api 类组装配置，手写代码零手写 API 面（§4）。 */
 object ApiGlue {
   val json = Json { ignoreUnknownKeys = true }
 

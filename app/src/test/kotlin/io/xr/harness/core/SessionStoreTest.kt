@@ -6,10 +6,10 @@ import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
-/** SessionStore 三态机 JVM 单测（swift SessionStoreTests 同构）：内存 prefs，无 Android 依赖。 */
+/** SessionStore 三态机 JVM 单测（swift SessionStoreTests 同构）：内存 prefs + 内存 token 存，无 Android 依赖。 */
 class SessionStoreTest {
 
-  private class MemPrefs : PreferencesStore {
+  class MemPrefs : PreferencesStore {
     val map = mutableMapOf<String, String>()
 
     override fun getString(key: String): String? = map[key]
@@ -23,8 +23,23 @@ class SessionStoreTest {
     }
   }
 
+  class MemTokens : TokenStoring {
+    var access: String? = null
+    var refresh: String? = null
+
+    override fun loadAccess(): String? = access
+
+    override fun loadRefresh(): String? = refresh
+
+    override fun save(accessToken: String?, refreshToken: String?) {
+      access = accessToken
+      refresh = refreshToken
+    }
+  }
+
   private val prefs = MemPrefs()
-  private val store = SessionStore(prefs)
+  private val tokens = MemTokens()
+  private val store = SessionStore(prefs, tokens)
 
   @Test
   fun `fresh store needs setup`() {
@@ -58,34 +73,49 @@ class SessionStoreTest {
   }
 
   @Test
-  fun `adoptLogin moves to ready`() {
+  fun `adoptLogin persists session and tokens and moves to ready`() {
     store.saveConfig("http://10.0.2.2:5104", "saas-android")
-    store.adoptLogin("alice", "t-1")
+    store.adoptLogin("alice", "t-1", "tok-1", "ref-1")
     assertEquals(SessionState.Ready(username = "alice", tenantId = "t-1"), store.state)
+    assertEquals("tok-1", tokens.access)
+    assertEquals("ref-1", tokens.refresh)
+  }
+
+  @Test
+  fun `ready state requires token`() {
+    store.saveConfig("http://10.0.2.2:5104", "saas-android")
+    store.adoptLogin("alice", "t-1", "tok-1", "ref-1")
+    assertEquals(SessionState.Ready(username = "alice", tenantId = "t-1"), store.state)
+    // 模拟 token 丢失（存储被清/过期清除）：身份仍在 prefs，但无 token 即回 needsLogin
+    tokens.save(null, null)
+    assertEquals(SessionState.NeedsLogin, store.state)
   }
 
   @Test
   fun `adoptLogin with null tenant yields ready without tenant`() {
     store.saveConfig("http://10.0.2.2:5104", "saas-android")
-    store.adoptLogin("alice", null)
+    store.adoptLogin("alice", null, "tok-1", null)
     assertEquals(SessionState.Ready(username = "alice", tenantId = null), store.state)
   }
 
   @Test
-  fun `clearSession returns to needsLogin but keeps config`() {
+  fun `clearSession wipes tokens too and returns to needsLogin`() {
     store.saveConfig("http://10.0.2.2:5104", "saas-android")
-    store.adoptLogin("alice", "t-1")
+    store.adoptLogin("alice", "t-1", "tok-1", "ref-1")
     store.clearSession()
     assertEquals(SessionState.NeedsLogin, store.state)
     assertTrue(store.isConfigured)
+    assertEquals(null, tokens.access)
+    assertEquals(null, tokens.refresh)
   }
 
   @Test
   fun `clearConfig returns to needsSetup`() {
     store.saveConfig("http://10.0.2.2:5104", "saas-android")
-    store.adoptLogin("alice", null)
+    store.adoptLogin("alice", null, "tok-1", null)
     store.clearConfig()
     assertEquals(SessionState.NeedsSetup, store.state)
     assertFalse(store.isConfigured)
+    assertEquals(null, tokens.access)
   }
 }

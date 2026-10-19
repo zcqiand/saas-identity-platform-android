@@ -16,6 +16,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -27,11 +28,15 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import io.xr.harness.app.SharedPreferencesStore
+import io.xr.harness.app.SharedPreferencesTokenStore
 import io.xr.harness.app.loginSeam
+import io.xr.harness.app.logoutSeam
+import io.xr.harness.app.whoamiSeam
 import io.xr.harness.core.ApiGlue
 import io.xr.harness.core.SessionState
 import io.xr.harness.core.SessionStore
 import io.xr.harness.core.TokenHolder
+import io.xr.harness.core.WhoamiUser
 import io.xr.harness.ui.AuthPhase
 import io.xr.harness.ui.AuthViewModel
 import kotlinx.coroutines.launch
@@ -48,11 +53,32 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun AppRoot() {
   val context = LocalContext.current
-  val store = remember { SessionStore(SharedPreferencesStore(context)) }
-  val tokens = remember { TokenHolder() }
+  val prefsStore = remember { SharedPreferencesStore(context) }
+  val tokenStore = remember { SharedPreferencesTokenStore(context) }
+  // 持久化 token 启动预载进内存持有（ktor bearer 插件读 TokenHolder）
+  val tokens = remember {
+    TokenHolder().also {
+      it.accessToken = tokenStore.loadAccess()
+      it.refreshToken = tokenStore.loadRefresh()
+    }
+  }
+  val store = remember { SessionStore(prefsStore, tokenStore) }
   val scope = rememberCoroutineScope()
-  val vm = remember { AuthViewModel(store, AuthViewModel.Seams(login = loginSeam(store, tokens))) }
+  val vm = remember {
+    AuthViewModel(
+        store,
+        AuthViewModel.Seams(
+            login = loginSeam(store, tokens),
+            whoami = whoamiSeam(store, tokens),
+            logout = logoutSeam(store, tokens),
+        ),
+    )
+  }
   val session by vm.session.collectAsState()
+  val user by vm.user.collectAsState()
+
+  // 启动自愈：持久化会话 whoami 校验，失败即清密回登录
+  LaunchedEffect(Unit) { vm.restore() }
 
   when (val s = session) {
     is SessionState.NeedsSetup ->
@@ -70,6 +96,7 @@ fun AppRoot() {
     is SessionState.Ready ->
         AccountScreen(
             ready = s,
+            user = user,
             onLogout = { scope.launch { vm.logout() } },
         )
   }
@@ -172,13 +199,14 @@ fun LoginScreen(vm: AuthViewModel, onReconfigure: () -> Unit) {
 }
 
 @Composable
-fun AccountScreen(ready: SessionState.Ready, onLogout: () -> Unit) {
+fun AccountScreen(ready: SessionState.Ready, user: WhoamiUser?, onLogout: () -> Unit) {
   Column(
       modifier = Modifier.fillMaxSize().padding(24.dp),
       verticalArrangement = Arrangement.Center,
   ) {
     Text(text = "已登录", style = MaterialTheme.typography.headlineMedium)
     Spacer(modifier = Modifier.height(16.dp))
+    user?.displayName?.let { Text(text = "昵称：$it") }
     Text(text = "用户：${ready.username}")
     ready.tenantId?.let { Text(text = "租户：$it") }
     Spacer(modifier = Modifier.height(16.dp))
