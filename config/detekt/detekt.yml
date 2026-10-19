@@ -1,11 +1,14 @@
 build:
   maxIssues: 0
 complexity:
+  LongMethod:
+    active: true
+    excludes: ['**/MainActivity.kt'] # Compose 路由根+多屏单文件（swift 同位视图 300+ 行）；已尽拆（picker/create/tree/dialog/控制器束均独立 composable，130→74），再拆只把 LongMethod 换成 LongParameterList —— 定向豁免 2026-10-19 菜单切片
   TooManyFunctions:
     active: true
-    excludes: ['**/HarnessTraceListener.kt', '**/src/test/**/*.kt'] # porter 类职责单一豁免同前；测试类多 @Test 方法即形态本身（逐测一行为一断言），测试类豁免 2026-10-19 会话持久化切片
+    excludes: ['**/HarnessTraceListener.kt', '**/src/test/**/*.kt', '**/app/MenuWire.kt', '**/MainActivity.kt'] # porter 类职责单一豁免同前；测试类多 @Test 方法即形态本身（逐测一行为一断言），测试类豁免 2026-10-19 会话持久化切片；MenuWire 每缝一对(外层护栏+私有调用)即形态 2026-10-19 菜单切片；MainActivity 路由根多屏组合 11 函数即形态 2026-10-19 菜单切片
 naming:
   FunctionNaming:
     ignoreAnnotated: ['Composable'] # Compose 官方惯例：UI 组件函数 PascalCase（AOSP/Compose 指南），定向豁免 2026-10-19 登录切片
 exceptions:
-  excludes: ['**/ui/AuthViewModel.kt', '**/app/LoginWire.kt'] # seam 边界归一任意传输层异常为 AuthError.Unreachable，泛捕即职责本身（定向豁免 2026-10-19 登录切片）
+  excludes: ['**/ui/AuthViewModel.kt', '**/app/LoginWire.kt', '**/app/MenuWire.kt', '**/ui/MenusViewModel.kt', '**/ui/ClientsViewModel.kt'] # seam 边界归一任意传输层异常为 AuthError.Unreachable、VM 捕缝抛出落 Failed 态，泛捕即职责本身（定向豁免 2026-10-19 登录切片；MenuWire/MenusViewModel 2026-10-19 菜单切片）
