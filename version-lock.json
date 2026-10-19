@@ -1,0 +1,20 @@
+{
+  "version_lock": {
+    "kotlin": "2.2.10（AGP 9.4.1 内置 Kotlin，版本随 AGP、无覆盖属性——spec §4.7-3 栈自洽优先；与 ktor 栈 2.4.21 各自独立）",
+    "agp": "9.4.1（Gradle 最低 9.6.0 无上限，全局 gradle 9.8.1 兼容）",
+    "compose-bom": "2026.09.00",
+    "compose-compiler-plugin": "org.jetbrains.kotlin.plugin.compose 2.2.10（与内置 KGP 配对）",
+    "activity-compose": "1.13.0",
+    "lifecycle-viewmodel-compose": "2.11.0",
+    "kotlinx-coroutines": "1.11.0",
+    "ktfmt-gradle": "0.27.0",
+    "detekt": "1.23.8",
+    "junit": "6.1.3（junit-bom 收口，禁裸写版本）",
+    "gradle": "9.8.1（全局 PATH，禁仓内 gradlew 入门）",
+    "jdk": "21",
+    "minSdk": "29",
+    "compileSdk": "37",
+    "targetSdk": "37",
+    "android-sdk": "cmdline-tools 16111833 + platforms/android-37.0 + build-tools/37.0.0（装机见 suite spec §4.5）"
+  }
+}
