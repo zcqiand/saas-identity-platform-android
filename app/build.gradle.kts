@@ -71,7 +71,8 @@ detekt {
 }
 
 // ktfmt 生成区排除走任务级 exclude（ktfmt 0.27.0 srcSetPathExclusionPattern 只认 source
-// set 路径的实证结论，ktor 同款）；app 模块相对路径带 app/ 前缀。
+// set 路径的实证结论，ktor 同款）；模式相对 source set 根、禁带 app/src/main/kotlin/ 前缀
+// （带前缀的文件级排除 0.27.0 实证无效——骨架期踩坑，ADR-0052 同源记录）。
 tasks.withType<com.ncorti.ktfmt.gradle.tasks.KtfmtBaseTask>().configureEach {
   exclude("saas/identity/shared/**")
   exclude("saas/identity/entity/**")
