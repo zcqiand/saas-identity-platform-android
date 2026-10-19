@@ -7,3 +7,5 @@ local.properties
 .state/gate.partial.json
 .state/alignment.json
 .state/tree-change.json
+.kotlin/
+.openapi-tmp/

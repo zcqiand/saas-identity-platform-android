@@ -1,6 +1,7 @@
 plugins {
   alias(libs.plugins.android.application)
   alias(libs.plugins.kotlin.compose)
+  alias(libs.plugins.kotlin.serialization)
   alias(libs.plugins.ktfmt)
   alias(libs.plugins.detekt)
 }
@@ -33,6 +34,15 @@ dependencies {
   implementation(libs.androidx.lifecycle.viewmodel.compose)
   implementation(libs.kotlinx.coroutines.core)
 
+  // 生成区依赖收口 ktor-bom（ktor 家族仓同款纪律）：版本一处管，禁裸写。
+  implementation(platform(libs.ktor.bom))
+  implementation(libs.kotlinx.serialization.json)
+  implementation(libs.ktor.client.core)
+  implementation(libs.ktor.client.cio)
+  implementation(libs.ktor.client.content.negotiation)
+  implementation(libs.ktor.client.auth)
+  implementation(libs.ktor.serialization.kotlinx.json)
+
   testImplementation(platform(libs.junit.bom))
   testImplementation(libs.junit.jupiter)
   // trace listener 直接 import platform API（ktor 同款）：JUnit 6 起 launcher 必须显式声明
@@ -63,6 +73,6 @@ detekt {
 // ktfmt 生成区排除走任务级 exclude（ktfmt 0.27.0 srcSetPathExclusionPattern 只认 source
 // set 路径的实证结论，ktor 同款）；app 模块相对路径带 app/ 前缀。
 tasks.withType<com.ncorti.ktfmt.gradle.tasks.KtfmtBaseTask>().configureEach {
-  exclude("app/src/main/kotlin/saas/identity/shared/**")
-  exclude("app/src/main/kotlin/saas/identity/entity/**")
+  exclude("saas/identity/shared/**")
+  exclude("saas/identity/entity/**")
 }
