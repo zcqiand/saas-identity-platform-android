@@ -7,18 +7,23 @@ SaaS 身份平台 Android 端（`saas-identity-platform-android`）——一句�
 ## 快速开始
 
 ```bash
-# 按 android 栈替换为实际命令
-npm install        # 安装依赖
-npm test           # 全量测试（无 Key / 无 Docker / 无网可跑）
-npm run dev        # 本地开发
-npm run build      # 生产构建
+export PATH="/d/qiand-life/3-resources/8-ego/software/gradle-9.8.1/bin:$PATH"
+export ANDROID_HOME="D:\qiand-life\3-resources\8-ego\software\android-sdk"
+gradle test            # JVM 单测（无设备依赖）
+gradle assembleDebug   # 构建 APK
 ```
 
-## env 契约
+> 依赖镜像与 wrapper 纪律见 CLAUDE.md；禁仓内 gradlew 入门（全局 gradle PATH）。
 
-| 键 | 语义 | 缺失行为 |
+## 运行配置（应用内配置页）
+
+后端基址与 clientId 不走 env，应用首启进**配置页**手填（swift 仓 ConfigView 同构；
+缺失即拦，禁止默认值兜底，suite-hard-rules §1）：
+
+| 项 | dev 值 | 说明 |
 | :--- | :--- | :--- |
-| `API_BASE_URL` | 后端 API 基址。dev 值 `http://localhost:5104`（X04 aspnetcore 槽，后端切换归 backend-config 切换器） | **抛错**（fail-fast，禁止默认值兜底，suite-hard-rules §1） |
+| API 地址 | `http://10.0.2.2:5104`（模拟器内访问宿主机）/ `http://localhost:5104`（宿主机直跑） | X04 aspnetcore 槽，后端切换归 backend-config 切换器 |
+| clientId | IdP 侧已注册的 client 标识 | 必填业务身份字段（suite-hard-rules §3），android client 注册归 live 接线刀 |
 
 ## 功能特性
 
