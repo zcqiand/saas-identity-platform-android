@@ -21,7 +21,7 @@ SaaS 身份平台 Android 端（`saas-identity-platform-android`，技术栈 `an
 - 依赖钉死 version-lock.json（gradle/libs.versions.toml 是唯一钉版面，禁裸写版本）
 - 注解处理一律 KSP 禁 kapt（Phase 1 接 Room/Hilt 时生效；新栈无历史包袱）
 - Maven 依赖一律走阿里云镜像（settings.gradle.kts repositories 序，禁删镜像位）
-- 生成区（Phase 1 codegen）禁手改；detekt/ktfmt 排除已按 saas/identity/shared/saas/identity/entity 钉（ktor 同纪律）
+- 生成区（`app/src/main/kotlin/saas/identity/shared/`，ADR-0052 typed client）禁手改——regen 走 `bash scripts/gen-shared.sh`（漂移 fail-loud）；detekt/ktfmt 排除已按 saas/identity/shared/saas/identity/entity 钉（ktor 同纪律）
 
 ## 3. 技术栈与版本（钉死于 version-lock.json）
 

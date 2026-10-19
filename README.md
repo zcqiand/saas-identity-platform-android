@@ -28,7 +28,7 @@ npm run build      # 生产构建
 
 | 技术 | 版本 |
 | :--- | :--- |
-| __STACK_DESC_LINE__ | |
+| Kotlin（AGP 9.4.1 内置）+ Jetpack Compose（BOM）+ Ktor Client（ktor-bom，生成区传输栈）+ kotlinx-serialization-json | 2.2.10 / 2026.09.00 / 3.6.0 / 1.11.0 |
 
 > 依赖版本与 `version-lock.json` 的 `version_lock` 一致，不引入 lock 外的库。
 
