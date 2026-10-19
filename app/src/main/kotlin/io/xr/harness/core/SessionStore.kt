@@ -86,6 +86,11 @@ class SessionStore(private val prefs: PreferencesStore, private val tokens: Toke
     tokens.save(accessToken, refreshToken)
   }
 
+  /** 切租户收编（swift adoptSwitch 同位，仅身份位）：token 对已由 seam 直写 TokenHolder，core 不持内存 token。 */
+  fun adoptTenant(tenantId: String) {
+    prefs.putString(KEY_TENANT_ID, tenantId)
+  }
+
   fun clearSession() {
     prefs.remove(KEY_USERNAME)
     prefs.remove(KEY_TENANT_ID)

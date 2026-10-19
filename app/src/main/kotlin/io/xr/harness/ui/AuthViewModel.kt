@@ -4,6 +4,8 @@ import io.xr.harness.core.AuthError
 import io.xr.harness.core.LoginOutcome
 import io.xr.harness.core.SessionState
 import io.xr.harness.core.SessionStore
+import io.xr.harness.core.SwitchOutcome
+import io.xr.harness.core.TenantItem
 import io.xr.harness.core.WhoamiUser
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -34,10 +36,10 @@ class AuthViewModel(
           },
       val logout: suspend () -> Unit = { throw IllegalStateException("seam 未注入: logout") },
       val whoami: suspend () -> WhoamiUser? = { throw IllegalStateException("seam 未注入: whoami") },
-      val switchTenant: suspend (tenantId: String) -> Unit = { _ ->
+      val switchTenant: suspend (tenantId: String) -> SwitchOutcome = { _ ->
         throw IllegalStateException("seam 未注入: switchTenant")
       },
-      val listTenants: suspend () -> List<String> = {
+      val listTenants: suspend () -> List<TenantItem> = {
         throw IllegalStateException("seam 未注入: listTenants")
       },
   )
@@ -50,6 +52,9 @@ class AuthViewModel(
 
   private val _user = MutableStateFlow<WhoamiUser?>(null)
   val user: StateFlow<WhoamiUser?> = _user.asStateFlow()
+
+  private val _tenants = MutableStateFlow<List<TenantItem>>(emptyList())
+  val tenants: StateFlow<List<TenantItem>> = _tenants.asStateFlow()
 
   suspend fun login(username: String, password: String): Boolean {
     val clientId = store.clientId
@@ -101,10 +106,54 @@ class AuthViewModel(
     _user.value = who
   }
 
+  /**
+   * 切租户（swift vm.switchTenant 同构）：换发 token 由 seam 入账，成功后身份位收编 + whoami 重拉； 失败红字报错，store 未被 触碰（seam
+   * 内 adopt 前置校验），可重试。
+   */
+  suspend fun switchTenant(tenantId: String): Boolean {
+    _phase.value = AuthPhase.Busy
+    val outcome =
+        try {
+          seams.switchTenant(tenantId)
+        } catch (e: CancellationException) {
+          throw e
+        } catch (e: AuthError) {
+          SwitchOutcome.Failure(e)
+        } catch (e: Exception) {
+          SwitchOutcome.Failure(AuthError.Unreachable(e))
+        }
+    return when (outcome) {
+      is SwitchOutcome.Success -> {
+        store.adoptTenant(outcome.tenantId)
+        _session.value = store.state
+        refreshUser()
+        _phase.value = AuthPhase.Idle
+        true
+      }
+      is SwitchOutcome.Failure -> {
+        _phase.value = AuthPhase.Failed(outcome.error.message ?: "切换租户失败")
+        false
+      }
+    }
+  }
+
+  /** 租户成员真值（swift 进页 meListMyTenants 同位）：失败静默空列表（离线不炸，无重试轰炸）。 */
+  suspend fun loadTenants() {
+    _tenants.value =
+        try {
+          seams.listTenants()
+        } catch (e: CancellationException) {
+          throw e
+        } catch (e: Exception) {
+          emptyList()
+        }
+  }
+
   suspend fun logout() {
     runCatching { seams.logout() }
     store.clearSession()
     _user.value = null
+    _tenants.value = emptyList()
     _session.value = store.state
     _phase.value = AuthPhase.Idle
   }
@@ -131,6 +180,21 @@ class AuthViewModel(
       LoginOutcome.Failure(e)
     } catch (e: Exception) {
       LoginOutcome.Failure(AuthError.Unreachable(e))
+    }
+  }
+
+  /** whoami 重拉（切租户后用户位刷新）：失败不清会话——切换已成功，新 token 有效。 */
+  private suspend fun refreshUser() {
+    val who =
+        try {
+          seams.whoami()
+        } catch (e: CancellationException) {
+          throw e
+        } catch (e: Exception) {
+          null
+        }
+    if (who != null) {
+      _user.value = who
     }
   }
 }

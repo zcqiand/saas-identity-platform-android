@@ -7,6 +7,8 @@ import io.xr.harness.core.ApiGlue
 import io.xr.harness.core.AuthError
 import io.xr.harness.core.LoginOutcome
 import io.xr.harness.core.SessionStore
+import io.xr.harness.core.SwitchOutcome
+import io.xr.harness.core.TenantItem
 import io.xr.harness.core.TokenHolder
 import io.xr.harness.core.WhoamiUser
 import saas.identity.shared.api.AuthApi
@@ -125,6 +127,77 @@ fun logoutSeam(
             .sessionsLogout()
       } catch (e: Exception) {
         // 吊销失败不阻断登出
+      }
+    }
+  }
+}
+
+/** 租户成员真值（swift meListMyTenants 同位）：saas 成员关系无租户名，detail = 角色 + 状态（名富化归 admin 刀）。 */
+fun listTenantsSeam(
+    store: SessionStore,
+    tokens: TokenHolder,
+): suspend () -> List<TenantItem> {
+  return {
+    val baseUrl = store.baseUrl
+    if (baseUrl == null) {
+      emptyList()
+    } else {
+      try {
+        val meApi =
+            MeApi(
+                baseUrl = ApiGlue.normalizeBaseURL(baseUrl),
+                httpClientConfig = ApiGlue.bearerClientConfig(tokens),
+            )
+        val resp = meApi.meListMyTenants()
+        if (!resp.success) {
+          emptyList()
+        } else {
+          resp.body().map { m ->
+            TenantItem(
+                tenantId = m.tenantId.toString(),
+                name = null,
+                detail = "角色 ${m.roleIds.joinToString("、")} · ${m.status.value}",
+            )
+          }
+        }
+      } catch (e: Exception) {
+        emptyList()
+      }
+    }
+  }
+}
+
+/**
+ * 切租户 seam（swift switchTenant 同位）：meSwitchTenant 换发新 token 对——成功先把 token 入 TokenHolder 再返回
+ * Success（VM 据此收编身份位）；失败 store 未被触碰，可重试。
+ */
+fun switchTenantSeam(
+    store: SessionStore,
+    tokens: TokenHolder,
+): suspend (String) -> SwitchOutcome {
+  return { tenantId ->
+    val baseUrl = store.baseUrl
+    if (baseUrl == null) {
+      SwitchOutcome.Failure(AuthError.ClientNotConfigured())
+    } else {
+      try {
+        val meApi =
+            MeApi(
+                baseUrl = ApiGlue.normalizeBaseURL(baseUrl),
+                httpClientConfig = ApiGlue.bearerClientConfig(tokens),
+            )
+        val resp = meApi.meSwitchTenant(tenantId)
+        if (!resp.success) {
+          val bodyText = runCatching { resp.response.bodyAsText() }.getOrNull()
+          SwitchOutcome.Failure(ApiGlue.mapHttpError(resp.status, bodyText))
+        } else {
+          val body = resp.body()
+          tokens.accessToken = body.accessToken
+          tokens.refreshToken = body.refreshToken
+          SwitchOutcome.Success(tenantId = body.tenantId.toString())
+        }
+      } catch (e: Exception) {
+        SwitchOutcome.Failure(AuthError.Unreachable(e))
       }
     }
   }

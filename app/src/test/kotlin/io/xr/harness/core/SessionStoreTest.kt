@@ -110,6 +110,15 @@ class SessionStoreTest {
   }
 
   @Test
+  fun `adoptTenant switches current tenant in place`() {
+    store.saveConfig("http://10.0.2.2:5104", "saas-android")
+    store.adoptLogin("alice", "t-1", "tok-1", "ref-1")
+    store.adoptTenant("t-2")
+    assertEquals(SessionState.Ready(username = "alice", tenantId = "t-2"), store.state)
+    assertEquals("t-2", store.tenantId)
+  }
+
+  @Test
   fun `clearConfig returns to needsSetup`() {
     store.saveConfig("http://10.0.2.2:5104", "saas-android")
     store.adoptLogin("alice", null, "tok-1", null)

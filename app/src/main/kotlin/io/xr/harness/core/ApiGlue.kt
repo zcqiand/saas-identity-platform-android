@@ -42,6 +42,16 @@ sealed interface LoginOutcome {
 /** whoami 归一结果（swift CurrentUser 展示位）：失败由 seam 返回 null，不兜底字面量。 */
 data class WhoamiUser(val username: String, val displayName: String?, val tenantId: String?)
 
+/** 租户成员归一展示位（swift 账户页租户段行同构）：saas 成员关系无租户名，name 富化归 admin 刀。 */
+data class TenantItem(val tenantId: String, val name: String?, val detail: String?)
+
+/** 切租户归一结果：token 对由 seam 直写 TokenHolder（core 不持内存 token），VM 只收编身份位。 */
+sealed interface SwitchOutcome {
+  data class Success(val tenantId: String) : SwitchOutcome
+
+  data class Failure(val error: AuthError) : SwitchOutcome
+}
+
 /** token 内存持有（进程内即时生效位；持久化归 TokenStoring，启动时由 UI 预载进来）。 */
 class TokenHolder {
   @Volatile var accessToken: String? = null

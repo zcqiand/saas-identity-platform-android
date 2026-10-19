@@ -29,8 +29,10 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import io.xr.harness.app.SharedPreferencesStore
 import io.xr.harness.app.SharedPreferencesTokenStore
+import io.xr.harness.app.listTenantsSeam
 import io.xr.harness.app.loginSeam
 import io.xr.harness.app.logoutSeam
+import io.xr.harness.app.switchTenantSeam
 import io.xr.harness.app.whoamiSeam
 import io.xr.harness.core.ApiGlue
 import io.xr.harness.core.SessionState
@@ -71,6 +73,8 @@ fun AppRoot() {
             login = loginSeam(store, tokens),
             whoami = whoamiSeam(store, tokens),
             logout = logoutSeam(store, tokens),
+            switchTenant = switchTenantSeam(store, tokens),
+            listTenants = listTenantsSeam(store, tokens),
         ),
     )
   }
@@ -95,6 +99,7 @@ fun AppRoot() {
         )
     is SessionState.Ready ->
         AccountScreen(
+            vm = vm,
             ready = s,
             user = user,
             onLogout = { scope.launch { vm.logout() } },
@@ -198,8 +203,22 @@ fun LoginScreen(vm: AuthViewModel, onReconfigure: () -> Unit) {
   }
 }
 
+/** 账户页（swift AccountView 同构）：当前用户 + 租户成员段（点选切换，当前带 ✓，busy 禁点防连击）。 */
 @Composable
-fun AccountScreen(ready: SessionState.Ready, user: WhoamiUser?, onLogout: () -> Unit) {
+fun AccountScreen(
+    vm: AuthViewModel,
+    ready: SessionState.Ready,
+    user: WhoamiUser?,
+    onLogout: () -> Unit,
+) {
+  val scope = rememberCoroutineScope()
+  val phase by vm.phase.collectAsState()
+  val tenants by vm.tenants.collectAsState()
+  val busy = phase is AuthPhase.Busy
+
+  // 进页拉租户成员真值（swift .task listTenants 同位）；切租户成功后重拉跟随新 ✓
+  LaunchedEffect(ready.tenantId) { vm.loadTenants() }
+
   Column(
       modifier = Modifier.fillMaxSize().padding(24.dp),
       verticalArrangement = Arrangement.Center,
@@ -210,6 +229,35 @@ fun AccountScreen(ready: SessionState.Ready, user: WhoamiUser?, onLogout: () -> 
     Text(text = "用户：${ready.username}")
     ready.tenantId?.let { Text(text = "租户：$it") }
     Spacer(modifier = Modifier.height(16.dp))
-    Button(onClick = onLogout, modifier = Modifier.fillMaxWidth()) { Text(text = "退出登录") }
+    Text(text = "租户成员", style = MaterialTheme.typography.titleMedium)
+    if (tenants.isEmpty()) {
+      Text(text = "无成员关系", color = MaterialTheme.colorScheme.onSurfaceVariant)
+    }
+    tenants.forEach { t ->
+      val isCurrent = t.tenantId == ready.tenantId
+      TextButton(
+          onClick = { scope.launch { vm.switchTenant(t.tenantId) } },
+          enabled = !busy && !isCurrent,
+      ) {
+        Text(
+            text =
+                buildString {
+                  append(t.name ?: t.tenantId)
+                  if (isCurrent) {
+                    append(" ✓")
+                  }
+                  t.detail?.let { append("（$it）") }
+                },
+        )
+      }
+    }
+    (phase as? AuthPhase.Failed)?.let { failed ->
+      Spacer(modifier = Modifier.height(8.dp))
+      Text(text = failed.message, color = MaterialTheme.colorScheme.error)
+    }
+    Spacer(modifier = Modifier.height(16.dp))
+    Button(onClick = onLogout, enabled = !busy, modifier = Modifier.fillMaxWidth()) {
+      Text(text = "退出登录")
+    }
   }
 }

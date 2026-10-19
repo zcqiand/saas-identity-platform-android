@@ -5,6 +5,8 @@ import io.xr.harness.core.LoginOutcome
 import io.xr.harness.core.PreferencesStore
 import io.xr.harness.core.SessionState
 import io.xr.harness.core.SessionStore
+import io.xr.harness.core.SwitchOutcome
+import io.xr.harness.core.TenantItem
 import io.xr.harness.core.TokenStoring
 import io.xr.harness.core.WhoamiUser
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -245,6 +247,112 @@ class AuthViewModelTest {
     vm.reconfigure()
 
     assertEquals(SessionState.NeedsSetup, vm.session.value)
+  }
+
+  @Test
+  fun `switch tenant success adopts tenant refetches user and returns true`() {
+    val store = configuredStore()
+    store.adoptLogin("alice", "t-1", "tok-1", "ref-1")
+    var switchedTo: String? = null
+    val seams =
+        AuthViewModel.Seams(
+            switchTenant = { tenantId ->
+              switchedTo = tenantId
+              SwitchOutcome.Success(tenantId = "t-2")
+            },
+            whoami = { WhoamiUser("alice", "Alice", "t-2") },
+        )
+    val vm = AuthViewModel(store, seams)
+    kotlinx.coroutines.runBlocking { vm.restore() }
+
+    val ok = kotlinx.coroutines.runBlocking { vm.switchTenant("t-2") }
+
+    assertTrue(ok)
+    assertEquals("t-2", switchedTo)
+    assertEquals(SessionState.Ready(username = "alice", tenantId = "t-2"), vm.session.value)
+    assertEquals("t-2", store.tenantId)
+    assertEquals(WhoamiUser("alice", "Alice", "t-2"), vm.user.value)
+    assertEquals(AuthPhase.Idle, vm.phase.value)
+  }
+
+  @Test
+  fun `switch tenant failure shows failed phase and keeps session untouched`() {
+    val store = configuredStore()
+    store.adoptLogin("alice", "t-1", "tok-1", "ref-1")
+    val seams =
+        AuthViewModel.Seams(
+            switchTenant = { _ -> SwitchOutcome.Failure(AuthError.Server("403 无权访问目标租户")) },
+        )
+    // 不 restore（whoami 默认 seam 会清密）：本用例只验切换失败不触碰 store
+    val vm = AuthViewModel(store, seams)
+
+    val ok = kotlinx.coroutines.runBlocking { vm.switchTenant("t-2") }
+
+    assertFalse(ok)
+    assertEquals(AuthPhase.Failed("403 无权访问目标租户"), vm.phase.value)
+    assertEquals(SessionState.Ready(username = "alice", tenantId = "t-1"), vm.session.value)
+    assertEquals("t-1", store.tenantId)
+  }
+
+  @Test
+  fun `switch tenant seam throwing maps to unreachable failure`() {
+    val store = configuredStore()
+    store.adoptLogin("alice", "t-1", "tok-1", "ref-1")
+    val seams = AuthViewModel.Seams(switchTenant = { _ -> throw BoomError("boom") })
+    val vm = AuthViewModel(store, seams)
+
+    val ok = kotlinx.coroutines.runBlocking { vm.switchTenant("t-2") }
+
+    assertFalse(ok)
+    assertTrue((vm.phase.value as AuthPhase.Failed).message.contains("无法连接"))
+  }
+
+  @Test
+  fun `loadTenants populates tenant list`() {
+    val seams =
+        AuthViewModel.Seams(
+            listTenants = {
+              listOf(TenantItem("t-1", null, "角色 owner"), TenantItem("t-2", null, "角色 member"))
+            },
+        )
+    val vm = AuthViewModel(configuredStore(), seams)
+
+    kotlinx.coroutines.runBlocking { vm.loadTenants() }
+
+    assertEquals(
+        listOf(TenantItem("t-1", null, "角色 owner"), TenantItem("t-2", null, "角色 member")),
+        vm.tenants.value,
+    )
+  }
+
+  @Test
+  fun `loadTenants failure yields empty list without crashing`() {
+    val seams = AuthViewModel.Seams(listTenants = { throw BoomError("boom") })
+    val vm = AuthViewModel(configuredStore(), seams)
+
+    kotlinx.coroutines.runBlocking { vm.loadTenants() }
+
+    assertTrue(vm.tenants.value.isEmpty())
+  }
+
+  @Test
+  fun `logout clears tenants too`() {
+    val store = configuredStore()
+    store.adoptLogin("alice", "t-1", "tok-1", "ref-1")
+    val seams =
+        AuthViewModel.Seams(
+            logout = {},
+            whoami = { WhoamiUser("alice", null, "t-1") },
+            listTenants = { listOf(TenantItem("t-1", null, null)) },
+        )
+    val vm = AuthViewModel(store, seams)
+    kotlinx.coroutines.runBlocking { vm.restore() }
+    kotlinx.coroutines.runBlocking { vm.loadTenants() }
+    assertTrue(vm.tenants.value.isNotEmpty())
+
+    kotlinx.coroutines.runBlocking { vm.logout() }
+
+    assertTrue(vm.tenants.value.isEmpty())
   }
 }
 
