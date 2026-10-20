@@ -15,14 +15,14 @@ class MenuTreeTest {
 
   private fun menu(
       id: String,
-      parentId: String,
+      parentId: String?,
       title: String,
       sortOrder: Int = 1,
   ): SysMenu =
       SysMenu(
           id = Uuid.parse(id),
           clientId = "lab-management",
-          parentId = Uuid.parse(parentId),
+          parentId = parentId?.let { Uuid.parse(it) },
           title = title,
           type = SysMenuType.menu,
           sortOrder = sortOrder,
@@ -46,6 +46,16 @@ class MenuTreeTest {
         )
 
     assertEquals(listOf("系统", "孤儿"), tree.map { it.menu.title }) // 孤儿挂根，不消失
+    assertTrue(tree[0].children.isEmpty())
+  }
+
+  @Test
+  fun `null parent (wire-omitted root) hangs at root`() {
+    // 2026-10-20 live 冒烟实证：后端平铺列表根节点整个省略 parentId（契约 required+nullable
+    // 与 wire 不符），null 必须与零值哨兵同口径挂根。
+    val tree = buildMenuTree(listOf(menu("00000000-0000-0000-0000-000000000001", null, "实验过程管理")))
+
+    assertEquals(listOf("实验过程管理"), tree.map { it.menu.title })
     assertTrue(tree[0].children.isEmpty())
   }
 

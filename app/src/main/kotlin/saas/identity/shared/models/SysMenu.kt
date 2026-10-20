@@ -58,7 +58,7 @@ data class SysMenu (
     val clientId: kotlin.String,
 
     @Contextual @SerialName(value = "parentId")
-    val parentId: kotlin.uuid.Uuid,
+    val parentId: kotlin.uuid.Uuid? = null,
 
     @SerialName(value = "title")
     val title: kotlin.String,

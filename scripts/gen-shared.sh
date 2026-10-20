@@ -85,6 +85,19 @@ for path in sys.stdin.buffer.read().split(b"\0"):
             "import io.ktor.client.plugins.contentnegotiation.ContentNegotiation\n"
             "import io.ktor.serialization.kotlinx.json.json",
         )
+    #   4) 缺 key 容忍（parentId 族）：kotlinx 对「可空但无缺省」的属性仍要求 key 在场，
+    #      而本家族后端在根节点上整个省略 parentId（契约 required+nullable 与 wire 不符，
+    #      2026-10-20 saas android live 冒烟实证 SysMenu 反序列化即炸；swift 可选解码
+    #      缺 key 落 nil 故从未暴露）。两条子规则，均幂等：
+    #      4a) SysMenu.parentId 生成器把 required 压过 nullable 产非空 Uuid，宽化为
+    #          Uuid? = null（null 由 harness 按「null = 根」口径处理，MenuTree/parentKeyOf）；
+    #      4b) 通用：可空属性无缺省一律补 = null（EffectiveMenuNode.parentId 等），
+    #          已带缺省的行尾不是 ?, 天然不命中。
+    text = text.replace(
+        "val parentId: kotlin.uuid.Uuid,",
+        "val parentId: kotlin.uuid.Uuid? = null,",
+    )
+    text = re.sub(r"^(\s+val \w+: .+?\?),\s*$", r"\1 = null,", text, flags=re.M)
     if text != orig:
         with open(p, "w", encoding="utf-8", newline="") as f:
             f.write(text)

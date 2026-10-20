@@ -68,7 +68,9 @@ fun MenusScreen(onBack: () -> Unit, store: SessionStore, tokens: TokenHolder) {
           menus = menus,
           onEdit = { editing = it },
           onDelete = { deleting = it },
-          onMove = { m, ids -> scope.launch { st.menusVm.reorder(m.parentId.toString(), ids) } },
+          onMove = { m, ids ->
+            scope.launch { st.menusVm.reorder(m.parentId?.toString() ?: ROOT_SENTINEL, ids) }
+          },
       )
 
   Column(modifier = Modifier.fillMaxSize().padding(24.dp)) {
@@ -303,11 +305,13 @@ private fun rememberMenusState(store: SessionStore, tokens: TokenHolder): MenusS
   return MenusState(clientsVm, menusVm, selectedClient, { c -> selectedClient = c })
 }
 
-/** 父级选项键（"" = 根哨兵，其余 = parentId 字符串；编辑对话框与移动门共用口径）。 */
-internal fun parentKeyOf(menu: SysMenu): String =
-    if (menu.parentId.toString() == ROOT_SENTINEL) "" else menu.parentId.toString()
+/** 父级选项键（"" = 根哨兵，其余 = parentId 字符串；null/零值 = 根；编辑对话框与移动门共用口径）。 */
+internal fun parentKeyOf(menu: SysMenu): String {
+  val pid = menu.parentId?.toString()
+  return if (pid == null || pid == ROOT_SENTINEL) "" else pid
+}
 
-/** 同父兄弟段（sortOrder/title 排序，buildMenuTree 同口径）交换 delta 位后的全量 id 序列；越界为 null。 */
+/** 同父兄弟段（null 同段 = 根；sortOrder/title 排序，buildMenuTree 同口径）交换 delta 位后的全量 id 序列；越界为 null。 */
 private fun swappedSiblingIds(
     menus: List<SysMenu>,
     menuId: String,
@@ -321,7 +325,7 @@ private fun swappedSiblingIds(
           .map { it.id.toString() }
   val i = siblings.indexOf(menuId)
   val j = i + delta
-  val swappable = parentId != null && i >= 0 && j >= 0 && j < siblings.size
+  val swappable = i >= 0 && j >= 0 && j < siblings.size
   return if (swappable) {
     siblings.toMutableList().apply {
       this[i] = siblings[j]
