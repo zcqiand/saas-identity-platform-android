@@ -5,6 +5,7 @@ import io.ktor.client.HttpClient
 import io.ktor.client.HttpClientConfig
 import io.ktor.client.engine.HttpClientEngine
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
+import io.ktor.serialization.kotlinx.json.json
 import io.ktor.client.request.forms.FormDataContent
 import io.ktor.client.request.forms.MultiPartFormDataContent
 import io.ktor.client.request.header
@@ -32,8 +33,7 @@ open class ApiClient(
 
     private val clientConfig: (HttpClientConfig<*>) -> Unit by lazy {
         {
-            it.install(ContentNegotiation) {
-            }
+            it.install(ContentNegotiation) { json() }
             httpClientConfig?.invoke(it)
         }
     }

@@ -60,8 +60,8 @@ data class TenantMembership (
     @Contextual @SerialName(value = "status")
     val status: TenantMemberStatus,
 
-    @Contextual @SerialName(value = "joinedAt")
-    val joinedAt: java.time.OffsetDateTime
+    @SerialName(value = "joinedAt")
+    val joinedAt: kotlin.String
 
 ) {
 

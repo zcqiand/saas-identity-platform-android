@@ -41,8 +41,8 @@ data class UpdateTenantApplicationRequest (
     @SerialName(value = "status")
     val status: kotlin.Int,
 
-    @Contextual @SerialName(value = "expireTime")
-    val expireTime: java.time.OffsetDateTime? = null
+    @SerialName(value = "expireTime")
+    val expireTime: kotlin.String? = null
 
 ) {
 

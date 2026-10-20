@@ -48,8 +48,8 @@ data class SwitchTenantResponse (
     @SerialName(value = "refreshToken")
     val refreshToken: kotlin.String,
 
-    @Contextual @SerialName(value = "expiresAt")
-    val expiresAt: java.time.OffsetDateTime,
+    @SerialName(value = "expiresAt")
+    val expiresAt: kotlin.String,
 
     @Contextual @SerialName(value = "tenantId")
     val tenantId: kotlin.uuid.Uuid

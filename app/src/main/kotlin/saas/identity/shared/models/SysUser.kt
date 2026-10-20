@@ -57,11 +57,11 @@ data class SysUser (
     @Contextual @SerialName(value = "status")
     val status: SysUserStatus,
 
-    @Contextual @SerialName(value = "createdAt")
-    val createdAt: java.time.OffsetDateTime,
+    @SerialName(value = "createdAt")
+    val createdAt: kotlin.String,
 
-    @Contextual @SerialName(value = "updatedAt")
-    val updatedAt: java.time.OffsetDateTime,
+    @SerialName(value = "updatedAt")
+    val updatedAt: kotlin.String,
 
     @SerialName(value = "email")
     val email: kotlin.String? = null,
@@ -72,8 +72,8 @@ data class SysUser (
     @SerialName(value = "failedAttempts")
     val failedAttempts: kotlin.Int? = null,
 
-    @Contextual @SerialName(value = "lockedUntil")
-    val lockedUntil: java.time.OffsetDateTime? = null
+    @SerialName(value = "lockedUntil")
+    val lockedUntil: kotlin.String? = null
 
 ) {
 

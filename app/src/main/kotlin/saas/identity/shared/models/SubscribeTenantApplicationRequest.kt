@@ -41,8 +41,8 @@ data class SubscribeTenantApplicationRequest (
     @SerialName(value = "clientId")
     val clientId: kotlin.String,
 
-    @Contextual @SerialName(value = "expireTime")
-    val expireTime: java.time.OffsetDateTime? = null
+    @SerialName(value = "expireTime")
+    val expireTime: kotlin.String? = null
 
 ) {
 

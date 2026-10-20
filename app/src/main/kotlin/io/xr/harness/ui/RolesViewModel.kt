@@ -172,7 +172,7 @@ class RolesViewModel(
               roleId = roleID,
               tenantId = Uuid.parse(tenant),
               menuIds = emptyList(),
-              updatedAt = OffsetDateTime.now(),
+              updatedAt = OffsetDateTime.now().toString(),
           )
     }
   }

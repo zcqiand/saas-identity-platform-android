@@ -27,7 +27,7 @@ class MenuTreeTest {
           type = SysMenuType.menu,
           sortOrder = sortOrder,
           status = 1,
-          createdAt = OffsetDateTime.parse("2026-10-19T00:00:00Z"),
+          createdAt = OffsetDateTime.parse("2026-10-19T00:00:00Z").toString(),
       )
 
   @Test

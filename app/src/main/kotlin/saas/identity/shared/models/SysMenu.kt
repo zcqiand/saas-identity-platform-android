@@ -72,8 +72,8 @@ data class SysMenu (
     @SerialName(value = "status")
     val status: kotlin.Int,
 
-    @Contextual @SerialName(value = "createdAt")
-    val createdAt: java.time.OffsetDateTime,
+    @SerialName(value = "createdAt")
+    val createdAt: kotlin.String,
 
     @SerialName(value = "path")
     val path: kotlin.String? = null,

@@ -68,7 +68,10 @@ class TenantApplicationsViewModel(
       val created =
           seams.subscribe(
               tenant,
-              SubscribeTenantApplicationRequest(clientId = clientId, expireTime = expireTime),
+              SubscribeTenantApplicationRequest(
+                  clientId = clientId,
+                  expireTime = expireTime?.toString(),
+              ),
           )
       _applications.value = _applications.value + created
     }
@@ -86,7 +89,10 @@ class TenantApplicationsViewModel(
           seams.update(
               tenant,
               clientId,
-              UpdateTenantApplicationRequest(status = status ?: 0, expireTime = expireTime),
+              UpdateTenantApplicationRequest(
+                  status = status ?: 0,
+                  expireTime = expireTime?.toString(),
+              ),
           )
       )
     }

@@ -62,11 +62,11 @@ data class TenantMember (
     @Contextual @SerialName(value = "status")
     val status: TenantMemberStatus,
 
-    @Contextual @SerialName(value = "createdAt")
-    val createdAt: java.time.OffsetDateTime,
+    @SerialName(value = "createdAt")
+    val createdAt: kotlin.String,
 
-    @Contextual @SerialName(value = "updatedAt")
-    val updatedAt: java.time.OffsetDateTime,
+    @SerialName(value = "updatedAt")
+    val updatedAt: kotlin.String,
 
     @SerialName(value = "memberName")
     val memberName: kotlin.String? = null

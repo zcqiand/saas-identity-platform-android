@@ -49,8 +49,8 @@ class MembersViewModelTest {
           username = username,
           status = status,
           roleIds = roleIds,
-          createdAt = now,
-          updatedAt = now,
+          createdAt = now.toString(),
+          updatedAt = now.toString(),
           email = email,
       )
 
@@ -67,8 +67,8 @@ class MembersViewModelTest {
           roleName = name,
           isPreset = true,
           status = 1,
-          createdAt = now,
-          updatedAt = now,
+          createdAt = now.toString(),
+          updatedAt = now.toString(),
       )
 
   private val memberList =
@@ -449,16 +449,16 @@ class MembersViewModelTest {
                     memberName = "newinvite",
                     isOwner = false,
                     status = TenantMemberStatus.active,
-                    createdAt = now,
-                    updatedAt = now,
+                    createdAt = now.toString(),
+                    updatedAt = now.toString(),
                 ),
             user =
                 SysUser(
                     id = invitedID,
                     username = "newinvite",
                     status = SysUserStatus.invited,
-                    createdAt = now,
-                    updatedAt = now,
+                    createdAt = now.toString(),
+                    updatedAt = now.toString(),
                 ),
             roles = emptyList(),
         )
@@ -559,16 +559,16 @@ class MembersViewModelTest {
                     userId = invitedID,
                     isOwner = false,
                     status = TenantMemberStatus.active,
-                    createdAt = now,
-                    updatedAt = now,
+                    createdAt = now.toString(),
+                    updatedAt = now.toString(),
                 ),
             user =
                 SysUser(
                     id = invitedID,
                     username = "newinvite",
                     status = SysUserStatus.invited,
-                    createdAt = now,
-                    updatedAt = now,
+                    createdAt = now.toString(),
+                    updatedAt = now.toString(),
                 ),
             roles = listOf(adminRoleID),
         )
@@ -588,8 +588,8 @@ class MembersViewModelTest {
                     id = invitedID,
                     username = "newinvite",
                     status = SysUserStatus.disabled,
-                    createdAt = now,
-                    updatedAt = now,
+                    createdAt = now.toString(),
+                    updatedAt = now.toString(),
                 ),
             roles = emptyList(),
         )
@@ -613,16 +613,16 @@ class MembersViewModelTest {
                   memberName = null,
                   isOwner = false,
                   status = TenantMemberStatus.active,
-                  createdAt = now,
-                  updatedAt = now,
+                  createdAt = now.toString(),
+                  updatedAt = now.toString(),
               ),
           user =
               SysUser(
                   id = bobID,
                   username = "bob",
                   status = SysUserStatus.active,
-                  createdAt = now,
-                  updatedAt = now,
+                  createdAt = now.toString(),
+                  updatedAt = now.toString(),
               ),
           roles = emptyList(),
       )

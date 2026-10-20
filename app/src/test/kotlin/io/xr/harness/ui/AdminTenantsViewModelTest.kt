@@ -38,8 +38,8 @@ class AdminTenantsViewModelTest {
           tenantKey = key,
           name = name,
           status = status,
-          createdAt = stamp,
-          updatedAt = stamp,
+          createdAt = stamp.toString(),
+          updatedAt = stamp.toString(),
       )
 
   private val seedList =

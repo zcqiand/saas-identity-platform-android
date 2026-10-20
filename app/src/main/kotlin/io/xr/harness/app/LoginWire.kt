@@ -11,6 +11,7 @@ import io.xr.harness.core.SwitchOutcome
 import io.xr.harness.core.TenantItem
 import io.xr.harness.core.TokenHolder
 import io.xr.harness.core.WhoamiUser
+import java.time.OffsetDateTime
 import saas.identity.shared.api.AuthApi
 import saas.identity.shared.api.MeApi
 import saas.identity.shared.models.LoginRequest
@@ -194,7 +195,12 @@ fun switchTenantSeam(
           val body = resp.body()
           tokens.accessToken = body.accessToken
           tokens.refreshToken = body.refreshToken
-          SwitchOutcome.Success(tenantId = body.tenantId.toString(), expiresAt = body.expiresAt)
+          // expiresAt 展示位（REQ-2026-002 Q2）：wire 层 String 化后 parse fail-closed 为 null
+          SwitchOutcome.Success(
+              tenantId = body.tenantId.toString(),
+              expiresAt =
+                  body.expiresAt?.let { runCatching { OffsetDateTime.parse(it) }.getOrNull() },
+          )
         }
       } catch (e: Exception) {
         SwitchOutcome.Failure(AuthError.Unreachable(e))

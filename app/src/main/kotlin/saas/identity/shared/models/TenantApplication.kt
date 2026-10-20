@@ -56,11 +56,11 @@ data class TenantApplication (
     @SerialName(value = "status")
     val status: kotlin.Int,
 
-    @Contextual @SerialName(value = "createdAt")
-    val createdAt: java.time.OffsetDateTime,
+    @SerialName(value = "createdAt")
+    val createdAt: kotlin.String,
 
-    @Contextual @SerialName(value = "expireTime")
-    val expireTime: java.time.OffsetDateTime? = null
+    @SerialName(value = "expireTime")
+    val expireTime: kotlin.String? = null
 
 ) {
 

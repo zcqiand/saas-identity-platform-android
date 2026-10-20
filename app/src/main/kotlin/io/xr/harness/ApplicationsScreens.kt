@@ -31,6 +31,7 @@ import io.xr.harness.core.SessionStore
 import io.xr.harness.core.TokenHolder
 import io.xr.harness.ui.AdminClientsViewModel
 import io.xr.harness.ui.TenantApplicationsViewModel
+import java.time.OffsetDateTime
 import kotlinx.coroutines.launch
 import saas.identity.shared.models.OAuthClient
 import saas.identity.shared.models.TenantApplication
@@ -117,7 +118,8 @@ private suspend fun toggleApp(vm: TenantApplicationsViewModel, app: TenantApplic
   vm.update(
       clientId = app.clientId,
       status = if (app.status == 1) 0 else 1,
-      expireTime = app.expireTime,
+      // wire 层 String 化后此处 parse 回类型；坏值 fail-closed 为 null = PATCH 不传（= 不改，防误清语义不破）
+      expireTime = app.expireTime?.let { runCatching { OffsetDateTime.parse(it) }.getOrNull() },
   )
 }
 
@@ -186,7 +188,7 @@ private fun appRow(
 }
 
 private fun expireLabel(app: TenantApplication): String =
-    app.expireTime?.let { "到期：${it.toLocalDate()}" } ?: "无到期时间"
+    app.expireTime?.let { "到期：${it.take(ISO_DATE_PREFIX_LEN)}" } ?: "无到期时间"
 
 /** 对话框 host 段：按目标分派；提交回调持 VM 执行，成功才经 onDismiss 关（失败红字留在屏上可重试）。 */
 @Composable

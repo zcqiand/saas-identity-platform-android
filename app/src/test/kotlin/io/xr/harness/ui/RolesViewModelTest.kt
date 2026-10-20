@@ -46,8 +46,8 @@ class RolesViewModelTest {
           roleName = name,
           isPreset = id == adminRoleID,
           status = status,
-          createdAt = now,
-          updatedAt = now,
+          createdAt = now.toString(),
+          updatedAt = now.toString(),
       )
 
   private val roleList =
@@ -66,7 +66,12 @@ class RolesViewModelTest {
       roleId: Uuid,
       menuIds: List<String>,
   ): RoleMenuGrant =
-      RoleMenuGrant(roleId = roleId, tenantId = tenantID, menuIds = menuIds, updatedAt = now)
+      RoleMenuGrant(
+          roleId = roleId,
+          tenantId = tenantID,
+          menuIds = menuIds,
+          updatedAt = now.toString(),
+      )
 
   @Test
   fun `load populates roles`() = runBlocking {

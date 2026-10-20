@@ -37,8 +37,8 @@ class TenantApplicationsViewModelTest {
           tenantId = tenantID,
           clientId = clientId,
           status = status,
-          createdAt = base,
-          expireTime = expireTime,
+          createdAt = base.toString(),
+          expireTime = expireTime?.toString(),
       )
 
   private val appList =
@@ -95,7 +95,7 @@ class TenantApplicationsViewModelTest {
 
     assertTrue(ok)
     assertEquals("lab-react", requested?.clientId)
-    assertEquals(expire, requested?.expireTime, "订阅带的到期日必须原样上送（后端曾丢弃）")
+    assertEquals(expire.toString(), requested?.expireTime, "订阅带的到期日必须原样上送（后端曾丢弃）")
     assertEquals(3, vm.applications.value.size)
     assertEquals("lab-react", vm.applications.value.last().clientId)
   }
@@ -143,10 +143,10 @@ class TenantApplicationsViewModelTest {
     assertTrue(ok)
     assertEquals("lab-vue", requested?.first, "寻址 clientId 字符串列非 UUID id")
     assertEquals(1, requested?.second?.status)
-    assertEquals(expire, requested?.second?.expireTime)
+    assertEquals(expire.toString(), requested?.second?.expireTime)
     val row = vm.applications.value.first { it.clientId == "lab-vue" }
     assertEquals(1, row.status, "成功以响应原位替换行")
-    assertEquals(expire, row.expireTime)
+    assertEquals(expire.toString(), row.expireTime)
   }
 
   @Test

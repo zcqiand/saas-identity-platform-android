@@ -51,8 +51,8 @@ data class RoleMenuGrant (
     @SerialName(value = "menuIds")
     val menuIds: kotlin.collections.List<kotlin.String>,
 
-    @Contextual @SerialName(value = "updatedAt")
-    val updatedAt: java.time.OffsetDateTime
+    @SerialName(value = "updatedAt")
+    val updatedAt: kotlin.String
 
 ) {
 

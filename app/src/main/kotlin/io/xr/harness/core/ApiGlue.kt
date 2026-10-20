@@ -48,7 +48,8 @@ data class TenantItem(val tenantId: String, val name: String?, val detail: Strin
 
 /** 切租户归一结果：token 对由 seam 直写 TokenHolder（core 不持内存 token），VM 收编身份位 + 过期时刻。 */
 sealed interface SwitchOutcome {
-  data class Success(val tenantId: String, val expiresAt: OffsetDateTime) : SwitchOutcome
+  // expiresAt 可空（展示位，wire parse fail-closed 同款姿态）
+  data class Success(val tenantId: String, val expiresAt: OffsetDateTime?) : SwitchOutcome
 
   data class Failure(val error: AuthError) : SwitchOutcome
 }

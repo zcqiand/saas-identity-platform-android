@@ -41,8 +41,8 @@ class AdminClientsViewModelTest {
           refreshTokenValidity = 604800,
           autoApprove = false,
           status = status,
-          createdAt = OffsetDateTime.parse("2026-10-19T00:00:00Z"),
-          updatedAt = OffsetDateTime.parse("2026-10-19T00:00:00Z"),
+          createdAt = OffsetDateTime.parse("2026-10-19T00:00:00Z").toString(),
+          updatedAt = OffsetDateTime.parse("2026-10-19T00:00:00Z").toString(),
       )
 
   private val seedList =

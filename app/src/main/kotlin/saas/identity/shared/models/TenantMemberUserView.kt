@@ -62,11 +62,11 @@ data class TenantMemberUserView (
     @SerialName(value = "roleIds")
     val roleIds: kotlin.collections.List<kotlin.String>,
 
-    @Contextual @SerialName(value = "createdAt")
-    val createdAt: java.time.OffsetDateTime,
+    @SerialName(value = "createdAt")
+    val createdAt: kotlin.String,
 
-    @Contextual @SerialName(value = "updatedAt")
-    val updatedAt: java.time.OffsetDateTime,
+    @SerialName(value = "updatedAt")
+    val updatedAt: kotlin.String,
 
     @SerialName(value = "email")
     val email: kotlin.String? = null

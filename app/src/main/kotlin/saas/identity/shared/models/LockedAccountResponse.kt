@@ -46,8 +46,8 @@ data class LockedAccountResponse (
     @SerialName(value = "message")
     val message: kotlin.String,
 
-    @Contextual @SerialName(value = "lockedUntil")
-    val lockedUntil: java.time.OffsetDateTime,
+    @SerialName(value = "lockedUntil")
+    val lockedUntil: kotlin.String,
 
     @SerialName(value = "remainingAttempts")
     val remainingAttempts: kotlin.Int? = null

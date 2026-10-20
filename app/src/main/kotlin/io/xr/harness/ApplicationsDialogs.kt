@@ -32,6 +32,9 @@ import saas.identity.shared.models.TenantApplication
  * 裸 SQL 泄漏——红字如实呈现，不做前置重名校验（REQ-012 探针口径）。
  */
 
+/** wire 层 String 化后展示位取 ISO-8601 日期段长度（YYYY-MM-DD）。 */
+internal const val ISO_DATE_PREFIX_LEN = 10
+
 /** 订阅应用：client Picker（admin 面清单）必选 + 到期日（可空，YYYY-MM-DD，默认一年后）。 */
 @Composable
 internal fun AppSubscribeDialog(
@@ -100,7 +103,7 @@ internal fun AppExpireDialog(
     onDismiss: () -> Unit,
 ) {
   var expireText by
-      remember(app.clientId) { mutableStateOf(app.expireTime?.toLocalDate()?.toString() ?: "") }
+      remember(app.clientId) { mutableStateOf(app.expireTime?.take(ISO_DATE_PREFIX_LEN) ?: "") }
   var parseError by remember { mutableStateOf(false) }
   val parsed = parseExpireInput(expireText)
 

@@ -33,7 +33,7 @@ class MenusViewModelTest {
           type = SysMenuType.menu,
           sortOrder = sortOrder,
           status = 1,
-          createdAt = OffsetDateTime.parse("2026-10-19T00:00:00Z"),
+          createdAt = OffsetDateTime.parse("2026-10-19T00:00:00Z").toString(),
       )
 
   /** 按需覆盖的 fake 缝组：未覆盖的缝给静默缺省。 */
