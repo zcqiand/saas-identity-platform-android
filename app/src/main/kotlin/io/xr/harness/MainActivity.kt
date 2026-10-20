@@ -85,6 +85,7 @@ fun AppRoot() {
   var showMenus by remember { mutableStateOf(false) }
   var showMembers by remember { mutableStateOf(false) }
   var showRoles by remember { mutableStateOf(false) }
+  var showApplications by remember { mutableStateOf(false) }
 
   // 启动自愈：持久化会话 whoami 校验，失败即清密回登录
   LaunchedEffect(Unit) { vm.restore() }
@@ -109,6 +110,8 @@ fun AppRoot() {
           MembersScreen(onBack = { showMembers = false }, store = store, tokens = tokens)
         } else if (showRoles) {
           RolesScreen(onBack = { showRoles = false }, store = store, tokens = tokens)
+        } else if (showApplications) {
+          ApplicationsScreen(onBack = { showApplications = false }, store = store, tokens = tokens)
         } else {
           AccountScreen(
               vm = vm,
@@ -119,6 +122,7 @@ fun AppRoot() {
                       onOpenMenus = { showMenus = true },
                       onOpenMembers = { showMembers = true },
                       onOpenRoles = { showRoles = true },
+                      onOpenApplications = { showApplications = true },
                       onLogout = { scope.launch { vm.logout() } },
                   ),
           )
@@ -227,6 +231,7 @@ internal data class AccountNav(
     val onOpenMenus: () -> Unit,
     val onOpenMembers: () -> Unit,
     val onOpenRoles: () -> Unit,
+    val onOpenApplications: () -> Unit,
     val onLogout: () -> Unit,
 )
 
@@ -291,6 +296,9 @@ private fun AccountScreen(
     }
     Button(onClick = nav.onOpenRoles, enabled = !busy, modifier = Modifier.fillMaxWidth()) {
       Text(text = "角色管理")
+    }
+    Button(onClick = nav.onOpenApplications, enabled = !busy, modifier = Modifier.fillMaxWidth()) {
+      Text(text = "租户应用")
     }
     Button(onClick = nav.onLogout, enabled = !busy, modifier = Modifier.fillMaxWidth()) {
       Text(text = "退出登录")
