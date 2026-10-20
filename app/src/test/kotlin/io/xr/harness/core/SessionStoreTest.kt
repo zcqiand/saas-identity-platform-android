@@ -119,6 +119,39 @@ class SessionStoreTest {
   }
 
   @Test
+  fun `adoptOAuthToken swaps pair and aligns tenant`() {
+    store.saveConfig("http://10.0.2.2:5104", "saas-android")
+    store.adoptLogin("alice", "t-1", "tk-1", "rt-1")
+
+    store.adoptOAuthToken(accessToken = "tk-2", refreshToken = "rt-2", tenantId = "t-9")
+
+    assertEquals("tk-2", tokens.access)
+    assertEquals("rt-2", tokens.refresh)
+    assertEquals("t-9", store.tenantId)
+    assertEquals(SessionState.Ready(username = "alice", tenantId = "t-9"), store.state)
+  }
+
+  @Test
+  fun `adoptOAuthToken rejects when not logged in`() {
+    store.saveConfig("http://10.0.2.2:5104", "saas-android")
+    assertThrows(IllegalStateException::class.java) {
+      store.adoptOAuthToken(accessToken = "tk-1", refreshToken = "rt-1", tenantId = "t-1")
+    }
+    assertEquals(null, tokens.access, "未登录拒绝入账，token 对不许被写")
+  }
+
+  @Test
+  fun `adoptOAuthToken rejects empty access keeping old pair`() {
+    store.saveConfig("http://10.0.2.2:5104", "saas-android")
+    store.adoptLogin("alice", "t-1", "tk-1", "rt-1")
+    assertThrows(IllegalStateException::class.java) {
+      store.adoptOAuthToken(accessToken = "  ", refreshToken = "rt-2", tenantId = "t-1")
+    }
+    assertEquals("tk-1", tokens.access, "空 access 拒绝入账，旧 token 对保持")
+    assertEquals("rt-1", tokens.refresh)
+  }
+
+  @Test
   fun `clearConfig returns to needsSetup`() {
     store.saveConfig("http://10.0.2.2:5104", "saas-android")
     store.adoptLogin("alice", null, "tok-1", null)

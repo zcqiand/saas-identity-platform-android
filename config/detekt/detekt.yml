@@ -10,5 +10,9 @@ complexity:
 naming:
   FunctionNaming:
     ignoreAnnotated: ['Composable'] # Compose 官方惯例：UI 组件函数 PascalCase（AOSP/Compose 指南），定向豁免 2026-10-19 登录切片
+style:
+  ReturnCount:
+    active: true
+    excludes: ['**/ui/OAuthViewModel.kt'] # OAuth 三 grant（authorize/exchange/refresh）各为「clientId 守卫静默 false + 前置条件 fail-fast + runOp 收口」三 return 即形态；结构与 swift 同位，强行合并只会把守卫藏进 catch——定向豁免 2026-10-20 OAuth 切片
 exceptions:
-  excludes: ['**/ui/AuthViewModel.kt', '**/app/LoginWire.kt', '**/app/MenuWire.kt', '**/ui/MenusViewModel.kt', '**/app/AdminClientsWire.kt', '**/ui/AdminClientsViewModel.kt', '**/app/MembersWire.kt', '**/ui/MembersViewModel.kt', '**/app/RolesWire.kt', '**/ui/RolesViewModel.kt', '**/app/ApplicationsWire.kt', '**/ui/TenantApplicationsViewModel.kt'] # seam 边界归一任意传输层异常为 AuthError.Unreachable、VM 捕缝抛出落 Failed 态，泛捕即职责本身（定向豁免 2026-10-19 登录切片；MenuWire/MenusViewModel 2026-10-19 菜单切片；AdminClientsWire/AdminClientsViewModel 2026-10-20 客户端管理切片；MembersWire/MembersViewModel 2026-10-20 成员切片；RolesWire/RolesViewModel 2026-10-20 角色切片；ApplicationsWire/TenantApplicationsViewModel 2026-10-20 应用订阅切片）
+  excludes: ['**/ui/AuthViewModel.kt', '**/app/LoginWire.kt', '**/app/MenuWire.kt', '**/ui/MenusViewModel.kt', '**/app/AdminClientsWire.kt', '**/ui/AdminClientsViewModel.kt', '**/app/MembersWire.kt', '**/ui/MembersViewModel.kt', '**/app/RolesWire.kt', '**/ui/RolesViewModel.kt', '**/app/ApplicationsWire.kt', '**/ui/TenantApplicationsViewModel.kt', '**/app/OAuthWire.kt', '**/ui/OAuthViewModel.kt'] # seam 边界归一任意传输层异常为 AuthError.Unreachable、VM 捕缝抛出落 Failed 态，泛捕即职责本身（定向豁免 2026-10-19 登录切片；MenuWire/MenusViewModel 2026-10-19 菜单切片；AdminClientsWire/AdminClientsViewModel 2026-10-20 客户端管理切片；MembersWire/MembersViewModel 2026-10-20 成员切片；RolesWire/RolesViewModel 2026-10-20 角色切片；ApplicationsWire/TenantApplicationsViewModel 2026-10-20 应用订阅切片；OAuthWire/OAuthViewModel 2026-10-20 OAuth 切片）

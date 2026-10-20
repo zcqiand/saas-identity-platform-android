@@ -86,6 +86,7 @@ fun AppRoot() {
   var showMembers by remember { mutableStateOf(false) }
   var showRoles by remember { mutableStateOf(false) }
   var showApplications by remember { mutableStateOf(false) }
+  var showOauth by remember { mutableStateOf(false) }
 
   // 启动自愈：持久化会话 whoami 校验，失败即清密回登录
   LaunchedEffect(Unit) { vm.restore() }
@@ -112,6 +113,8 @@ fun AppRoot() {
           RolesScreen(onBack = { showRoles = false }, store = store, tokens = tokens)
         } else if (showApplications) {
           ApplicationsScreen(onBack = { showApplications = false }, store = store, tokens = tokens)
+        } else if (showOauth) {
+          OAuthScreen(onBack = { showOauth = false }, store = store, tokens = tokens)
         } else {
           AccountScreen(
               vm = vm,
@@ -119,10 +122,14 @@ fun AppRoot() {
               user = user,
               nav =
                   AccountNav(
-                      onOpenMenus = { showMenus = true },
-                      onOpenMembers = { showMembers = true },
-                      onOpenRoles = { showRoles = true },
-                      onOpenApplications = { showApplications = true },
+                      entries =
+                          listOf(
+                              NavEntry(label = "菜单管理", onOpen = { showMenus = true }),
+                              NavEntry(label = "成员管理", onOpen = { showMembers = true }),
+                              NavEntry(label = "角色管理", onOpen = { showRoles = true }),
+                              NavEntry(label = "租户应用", onOpen = { showApplications = true }),
+                              NavEntry(label = "OAuth 授权码", onOpen = { showOauth = true }),
+                          ),
                       onLogout = { scope.launch { vm.logout() } },
                   ),
           )
@@ -226,12 +233,12 @@ fun LoginScreen(vm: AuthViewModel, onReconfigure: () -> Unit) {
   }
 }
 
-/** 导航动作束（管理屏入口 + 登出，束形降参防 LongParameterList）。 */
+/** 管理屏入口（label + 打开动作）。 */
+internal data class NavEntry(val label: String, val onOpen: () -> Unit)
+
+/** 导航动作束（管理屏入口列 + 登出，入口列表随刀增长不涨参数）。 */
 internal data class AccountNav(
-    val onOpenMenus: () -> Unit,
-    val onOpenMembers: () -> Unit,
-    val onOpenRoles: () -> Unit,
-    val onOpenApplications: () -> Unit,
+    val entries: List<NavEntry>,
     val onLogout: () -> Unit,
 )
 
@@ -288,17 +295,10 @@ private fun AccountScreen(
       Text(text = failed.message, color = MaterialTheme.colorScheme.error)
     }
     Spacer(modifier = Modifier.height(16.dp))
-    Button(onClick = nav.onOpenMenus, enabled = !busy, modifier = Modifier.fillMaxWidth()) {
-      Text(text = "菜单管理")
-    }
-    Button(onClick = nav.onOpenMembers, enabled = !busy, modifier = Modifier.fillMaxWidth()) {
-      Text(text = "成员管理")
-    }
-    Button(onClick = nav.onOpenRoles, enabled = !busy, modifier = Modifier.fillMaxWidth()) {
-      Text(text = "角色管理")
-    }
-    Button(onClick = nav.onOpenApplications, enabled = !busy, modifier = Modifier.fillMaxWidth()) {
-      Text(text = "租户应用")
+    nav.entries.forEach { entry ->
+      Button(onClick = entry.onOpen, enabled = !busy, modifier = Modifier.fillMaxWidth()) {
+        Text(text = entry.label)
+      }
     }
     Button(onClick = nav.onLogout, enabled = !busy, modifier = Modifier.fillMaxWidth()) {
       Text(text = "退出登录")
