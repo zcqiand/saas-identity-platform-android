@@ -2,6 +2,7 @@
 
 package io.xr.harness.ui
 
+import io.xr.harness.Fn
 import io.xr.harness.core.AuthError
 import io.xr.harness.core.SessionStore
 import kotlin.uuid.Uuid
@@ -82,6 +83,7 @@ class OAuthViewModelTest {
       )
 
   @Test
+  @Fn(["M04.F03"])
   fun `authorize records code and echoed state`() = runBlocking {
     val prefs = MemPrefs()
     val tokens = MemTokens()
@@ -109,6 +111,7 @@ class OAuthViewModelTest {
   }
 
   @Test
+  @Fn(["M04.F03"])
   fun `authorize state mismatch drops code and blocks exchange`() = runBlocking {
     val prefs = MemPrefs()
     val tokens = MemTokens()
@@ -142,6 +145,7 @@ class OAuthViewModelTest {
   }
 
   @Test
+  @Fn(["M04.F03"])
   fun `exchange success adopts token pair`() = runBlocking {
     val prefs = MemPrefs()
     val tokens = MemTokens()
@@ -173,6 +177,7 @@ class OAuthViewModelTest {
   }
 
   @Test
+  @Fn(["M04.F03"])
   fun `exchange records expiresAt in store`() = runBlocking {
     val prefs = MemPrefs()
     val tokens = MemTokens()
@@ -197,6 +202,7 @@ class OAuthViewModelTest {
   }
 
   @Test
+  @Fn(["M04.F03"])
   fun `exchange failure is retryable keeping old session`() = runBlocking {
     val prefs = MemPrefs()
     val tokens = MemTokens()
@@ -235,6 +241,7 @@ class OAuthViewModelTest {
   }
 
   @Test
+  @Fn(["M04.F03"])
   fun `exchange without code fails fast and never calls seam`() = runBlocking {
     var seamCalled = false
     val prefs = MemPrefs()
@@ -263,6 +270,7 @@ class OAuthViewModelTest {
   }
 
   @Test
+  @Fn(["M04.F03"])
   fun `refresh rotates token pair`() = runBlocking {
     val prefs = MemPrefs()
     val tokens = MemTokens()
@@ -289,6 +297,7 @@ class OAuthViewModelTest {
   }
 
   @Test
+  @Fn(["M04.F03"])
   fun `refresh without refresh token fails fast`() = runBlocking {
     var seamCalled = false
     val prefs = MemPrefs()

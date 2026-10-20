@@ -1,5 +1,6 @@
 package io.xr.harness.core
 
+import io.xr.harness.Fn
 import java.time.OffsetDateTime
 import java.time.temporal.ChronoUnit
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -45,12 +46,14 @@ class SessionStoreTest {
   private val store = SessionStore(prefs, tokens)
 
   @Test
+  @Fn(["M01.F04"])
   fun `fresh store needs setup`() {
     assertEquals(SessionState.NeedsSetup, store.state)
     assertFalse(store.isConfigured)
   }
 
   @Test
+  @Fn(["M01.F04"])
   fun `saveConfig blank clientId fails fast and persists nothing`() {
     assertThrows(IllegalStateException::class.java) {
       store.saveConfig("http://10.0.2.2:5104", "  ")
@@ -60,12 +63,14 @@ class SessionStoreTest {
   }
 
   @Test
+  @Fn(["M01.F04"])
   fun `saveConfig blank baseUrl fails fast`() {
     assertThrows(IllegalStateException::class.java) { store.saveConfig("   ", "saas-android") }
     assertFalse(store.isConfigured)
   }
 
   @Test
+  @Fn(["M01.F04"])
   fun `saveConfig persists and state becomes needsLogin`() {
     // 归一化（去尾斜杠）归 ConfigScreen/ApiGlue，SessionStore 只 trim 存原值
     store.saveConfig("http://10.0.2.2:5104", "saas-android")
@@ -76,6 +81,7 @@ class SessionStoreTest {
   }
 
   @Test
+  @Fn(["M01.F04"])
   fun `adoptLogin persists session and tokens and moves to ready`() {
     store.saveConfig("http://10.0.2.2:5104", "saas-android")
     store.adoptLogin("alice", "t-1", "tok-1", "ref-1")
@@ -85,6 +91,7 @@ class SessionStoreTest {
   }
 
   @Test
+  @Fn(["M01.F04"])
   fun `ready state requires token`() {
     store.saveConfig("http://10.0.2.2:5104", "saas-android")
     store.adoptLogin("alice", "t-1", "tok-1", "ref-1")
@@ -95,6 +102,7 @@ class SessionStoreTest {
   }
 
   @Test
+  @Fn(["M01.F04"])
   fun `adoptLogin with null tenant yields ready without tenant`() {
     store.saveConfig("http://10.0.2.2:5104", "saas-android")
     store.adoptLogin("alice", null, "tok-1", null)
@@ -102,6 +110,7 @@ class SessionStoreTest {
   }
 
   @Test
+  @Fn(["M01.F04"])
   fun `clearSession wipes tokens too and returns to needsLogin`() {
     store.saveConfig("http://10.0.2.2:5104", "saas-android")
     store.adoptLogin("alice", "t-1", "tok-1", "ref-1")
@@ -113,6 +122,7 @@ class SessionStoreTest {
   }
 
   @Test
+  @Fn(["M01.F03"])
   fun `adoptTenant switches current tenant in place`() {
     store.saveConfig("http://10.0.2.2:5104", "saas-android")
     store.adoptLogin("alice", "t-1", "tok-1", "ref-1")
@@ -122,6 +132,7 @@ class SessionStoreTest {
   }
 
   @Test
+  @Fn(["M01.F03"])
   fun `adoptOAuthToken swaps pair and aligns tenant`() {
     store.saveConfig("http://10.0.2.2:5104", "saas-android")
     store.adoptLogin("alice", "t-1", "tk-1", "rt-1")
@@ -140,6 +151,7 @@ class SessionStoreTest {
   }
 
   @Test
+  @Fn(["M01.F03"])
   fun `adoptOAuthToken rejects when not logged in`() {
     store.saveConfig("http://10.0.2.2:5104", "saas-android")
     assertThrows(IllegalStateException::class.java) {
@@ -154,6 +166,7 @@ class SessionStoreTest {
   }
 
   @Test
+  @Fn(["M01.F03"])
   fun `adoptOAuthToken rejects empty access keeping old pair`() {
     store.saveConfig("http://10.0.2.2:5104", "saas-android")
     store.adoptLogin("alice", "t-1", "tk-1", "rt-1")
@@ -170,6 +183,7 @@ class SessionStoreTest {
   }
 
   @Test
+  @Fn(["M01.F03"])
   fun `adoptOAuthToken records expiresAt from expiresIn`() {
     store.saveConfig("http://10.0.2.2:5104", "saas-android")
     store.adoptLogin("alice", "t-1", "tk-1", "rt-1")
@@ -191,6 +205,7 @@ class SessionStoreTest {
   }
 
   @Test
+  @Fn(["M01.F03"])
   fun `adoptTenant records switch expiresAt`() {
     store.saveConfig("http://10.0.2.2:5104", "saas-android")
     store.adoptLogin("alice", "t-1", "tok-1", "ref-1")
@@ -203,6 +218,7 @@ class SessionStoreTest {
   }
 
   @Test
+  @Fn(["M01.F04"])
   fun `clearSession wipes expiresAt`() {
     store.saveConfig("http://10.0.2.2:5104", "saas-android")
     store.adoptLogin("alice", "t-1", "tk-1", "rt-1")
@@ -220,6 +236,7 @@ class SessionStoreTest {
   }
 
   @Test
+  @Fn(["M01.F04"])
   fun `clearConfig returns to needsSetup`() {
     store.saveConfig("http://10.0.2.2:5104", "saas-android")
     store.adoptLogin("alice", null, "tok-1", null)

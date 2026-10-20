@@ -2,6 +2,7 @@
 
 package io.xr.harness.ui
 
+import io.xr.harness.Fn
 import io.xr.harness.core.AuthError
 import java.time.OffsetDateTime
 import kotlin.uuid.Uuid
@@ -134,6 +135,7 @@ class MembersViewModelTest {
       )
 
   @Test
+  @Fn(["M01.F02"])
   fun `load without current tenant fails fast and never calls seams`() = runBlocking {
     var seamCalled = false
     val vm =
@@ -169,6 +171,7 @@ class MembersViewModelTest {
   }
 
   @Test
+  @Fn(["M01.F02"])
   fun `load success populates members and roles`() = runBlocking {
     val receivedBySeam = mutableListOf<String>()
     val vm =
@@ -204,6 +207,7 @@ class MembersViewModelTest {
   }
 
   @Test
+  @Fn(["M01.F02"])
   fun `assign success replaces row with authoritative read back`() = runBlocking {
     var assigned: Triple<String, String, List<String>>? = null
     val vm =
@@ -246,6 +250,7 @@ class MembersViewModelTest {
   }
 
   @Test
+  @Fn(["M01.F02"])
   fun `assign 403 failure keeps list and reports retryable`() = runBlocking {
     var reject = true
     val vm =
@@ -286,6 +291,7 @@ class MembersViewModelTest {
   }
 
   @Test
+  @Fn(["M01.F02"])
   fun `load network failure keeps state and reports`() = runBlocking {
     val vm =
         MembersViewModel(
@@ -307,6 +313,7 @@ class MembersViewModelTest {
   }
 
   @Test
+  @Fn(["M00.F02"])
   fun `create appends row to list`() = runBlocking {
     var received: Pair<String, CreateSysUserRequest>? = null
     val newID = Uuid.random()
@@ -343,6 +350,7 @@ class MembersViewModelTest {
   }
 
   @Test
+  @Fn(["M00.F02"])
   fun `update replaces row in place`() = runBlocking {
     var requested: UpdateSysUserRequestBox = UpdateSysUserRequestBox()
     val vm =
@@ -373,6 +381,7 @@ class MembersViewModelTest {
   }
 
   @Test
+  @Fn(["M00.F02"])
   fun `change status replaces row both ways`() = runBlocking {
     var current: TenantMemberStatus = TenantMemberStatus.active
     val vm =
@@ -412,6 +421,7 @@ class MembersViewModelTest {
   }
 
   @Test
+  @Fn(["M00.F02"])
   fun `remove deletes row without response body`() = runBlocking {
     var removed: Pair<String, String>? = null
     val vm =
@@ -435,6 +445,7 @@ class MembersViewModelTest {
   }
 
   @Test
+  @Fn(["M00.F02"])
   fun `invite maps nested view to flat row`() = runBlocking {
     // 契约形状：邀请响应是嵌套 TenantMemberView，member.status=active 但 user.status=invited——
     // 列表行 status 跟 user.status（carol=invited 上行实况）。
@@ -494,6 +505,7 @@ class MembersViewModelTest {
   }
 
   @Test
+  @Fn(["M00.F02"])
   fun `refresh replaces row with authoritative state`() = runBlocking {
     val vm =
         MembersViewModel(
@@ -525,6 +537,7 @@ class MembersViewModelTest {
   }
 
   @Test
+  @Fn(["M00.F02"])
   fun `lifecycle ops without tenant fail fast`() = runBlocking {
     var seamCalled = false
     val vm = MembersViewModel(tenantId = { null }, seams = allMarkedSeams { seamCalled = true })
@@ -548,6 +561,7 @@ class MembersViewModelTest {
   }
 
   @Test
+  @Fn(["M00.F02"])
   fun `flat row maps nested view or fails fast on unmappable status`() {
     val invitedID = Uuid.random()
     val nested =

@@ -1,5 +1,6 @@
 package io.xr.harness.app
 
+import io.xr.harness.Fn
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotEquals
 import org.junit.jupiter.api.Assertions.assertNull
@@ -36,6 +37,7 @@ class EncryptedTokenStoreTest {
   }
 
   @Test
+  @Fn(["M01.F04"])
   fun `save stores ciphertext and round-trips plaintext`() {
     val prefs = MemPrefs()
     val store = EncryptedTokenStore(prefs, MarkCipher())
@@ -49,6 +51,7 @@ class EncryptedTokenStoreTest {
   }
 
   @Test
+  @Fn(["M01.F04"])
   fun `access and refresh persist independently`() {
     val prefs = MemPrefs()
     val store = EncryptedTokenStore(prefs, MarkCipher())
@@ -63,6 +66,7 @@ class EncryptedTokenStoreTest {
   }
 
   @Test
+  @Fn(["M01.F04"])
   fun `tampered ciphertext fails closed to null`() {
     val prefs = MemPrefs()
     val store = EncryptedTokenStore(prefs, MarkCipher())
@@ -75,6 +79,7 @@ class EncryptedTokenStoreTest {
   }
 
   @Test
+  @Fn(["M01.F04"])
   fun `clear saves wipe keys entirely`() {
     val prefs = MemPrefs()
     val store = EncryptedTokenStore(prefs, MarkCipher())
@@ -89,6 +94,7 @@ class EncryptedTokenStoreTest {
   }
 
   @Test
+  @Fn(["M01.F04"])
   fun `ciphertext differs from plaintext for realistic token`() {
     val prefs = MemPrefs()
     val store = EncryptedTokenStore(prefs, MarkCipher())

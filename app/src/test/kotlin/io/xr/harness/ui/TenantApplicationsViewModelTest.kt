@@ -2,6 +2,7 @@
 
 package io.xr.harness.ui
 
+import io.xr.harness.Fn
 import io.xr.harness.core.AuthError
 import java.time.OffsetDateTime
 import kotlin.uuid.Uuid
@@ -54,6 +55,7 @@ class TenantApplicationsViewModelTest {
       )
 
   @Test
+  @Fn(["M00.F05"])
   fun `load populates applications`() = runBlocking {
     var listed: String? = null
     val vm =
@@ -75,6 +77,7 @@ class TenantApplicationsViewModelTest {
   }
 
   @Test
+  @Fn(["M00.F05"])
   fun `subscribe appends row and carries expire time`() = runBlocking {
     var requested: SubscribeTenantApplicationRequest? = null
     val vm =
@@ -101,6 +104,7 @@ class TenantApplicationsViewModelTest {
   }
 
   @Test
+  @Fn(["M00.F05"])
   fun `subscribe without expire time sends null`() = runBlocking {
     var requested: SubscribeTenantApplicationRequest? = null
     val vm =
@@ -122,6 +126,7 @@ class TenantApplicationsViewModelTest {
   }
 
   @Test
+  @Fn(["M00.F05"])
   fun `update replaces row in place`() = runBlocking {
     var requested: Pair<String, UpdateTenantApplicationRequest>? = null
     val vm =
@@ -150,6 +155,7 @@ class TenantApplicationsViewModelTest {
   }
 
   @Test
+  @Fn(["M00.F05"])
   fun `remove deletes row by client id`() = runBlocking {
     var removed: Pair<String, String>? = null
     val vm =
@@ -176,6 +182,7 @@ class TenantApplicationsViewModelTest {
   }
 
   @Test
+  @Fn(["M00.F05"])
   fun `lifecycle ops without tenant fail fast`() = runBlocking {
     var seamCalled = false
     val marked: () -> Unit = { seamCalled = true }
@@ -213,6 +220,7 @@ class TenantApplicationsViewModelTest {
   }
 
   @Test
+  @Fn(["M00.F05"])
   fun `failure seam keeps list and reports retryable`() = runBlocking {
     var reject = true
     val vm =

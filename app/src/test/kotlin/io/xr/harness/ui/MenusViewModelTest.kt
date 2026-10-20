@@ -2,6 +2,7 @@
 
 package io.xr.harness.ui
 
+import io.xr.harness.Fn
 import io.xr.harness.core.AuthError
 import io.xr.harness.core.MenuNode
 import io.xr.harness.core.ROOT_SENTINEL
@@ -72,6 +73,7 @@ class MenusViewModelTest {
       (phase as MenusViewModel.Phase.Failed).message
 
   @Test
+  @Fn(["M04.F04"])
   fun `load stores clientId and menus`() = runBlocking {
     val m = vm { list = { _ -> listOf(menu("00000000-0000-0000-0000-000000000001")) } }
 
@@ -87,6 +89,7 @@ class MenusViewModelTest {
   }
 
   @Test
+  @Fn(["M04.F04"])
   fun `load failure reports and keeps menus empty`() = runBlocking {
     val m = vm { list = { _ -> throw AuthError.Server("服务器错误（HTTP 500）") } }
 
@@ -98,6 +101,7 @@ class MenusViewModelTest {
   }
 
   @Test
+  @Fn(["M04.F04"])
   fun `ops before load fail with no-client message`() = runBlocking {
     val m = vm()
     val request = CreateSysMenuRequest(title = "新菜单", type = SysMenuType.menu)
@@ -111,6 +115,7 @@ class MenusViewModelTest {
   }
 
   @Test
+  @Fn(["M04.F04"])
   fun `create appends row in place`() = runBlocking {
     val created = menu("00000000-0000-0000-0000-000000000002", title = "新菜单")
     val m = vm {
@@ -127,6 +132,7 @@ class MenusViewModelTest {
   }
 
   @Test
+  @Fn(["M04.F04"])
   fun `update replaces row in place by id`() = runBlocking {
     val original = menu("00000000-0000-0000-0000-000000000001", title = "旧名")
     val updated = menu("00000000-0000-0000-0000-000000000001", title = "新名")
@@ -144,6 +150,7 @@ class MenusViewModelTest {
   }
 
   @Test
+  @Fn(["M04.F04"])
   fun `move replaces row with server-returned parent`() = runBlocking {
     val moved =
         menu("00000000-0000-0000-0000-000000000001")
@@ -161,6 +168,7 @@ class MenusViewModelTest {
   }
 
   @Test
+  @Fn(["M04.F04"])
   fun `reorder re-sorts sortOrder locally ignoring server response`() = runBlocking {
     val a = menu("00000000-0000-0000-0000-000000000001", sortOrder = 1)
     val b = menu("00000000-0000-0000-0000-000000000002", sortOrder = 2)
@@ -196,6 +204,7 @@ class MenusViewModelTest {
   }
 
   @Test
+  @Fn(["M04.F04"])
   fun `delete removes row in place`() = runBlocking {
     val m = vm {
       list = { _ ->
@@ -217,6 +226,7 @@ class MenusViewModelTest {
   }
 
   @Test
+  @Fn(["M04.F04"])
   fun `op failure leaves list untouched and reports`() = runBlocking {
     val m = vm { delete = { _, _ -> throw AuthError.Unreachable(Exception("connection reset")) } }
     m.load("lab-management")
@@ -230,6 +240,7 @@ class MenusViewModelTest {
   }
 
   @Test
+  @Fn(["M04.F04"])
   fun `tree exposes nested nodes`() = runBlocking {
     val parent = "00000000-0000-0000-0000-000000000001"
     val m = vm {

@@ -193,6 +193,7 @@ fun ConfigScreen(onSave: (String, String) -> Unit) {
   }
 }
 
+// @entry M01.F04.I03 — 登录页本体（swift LoginPage 同构，用户从这里进入系统）
 @Composable
 fun LoginScreen(vm: AuthViewModel, onReconfigure: () -> Unit) {
   val scope = rememberCoroutineScope()

@@ -2,6 +2,7 @@
 
 package io.xr.harness.ui
 
+import io.xr.harness.Fn
 import io.xr.harness.core.AuthError
 import java.time.OffsetDateTime
 import kotlin.uuid.Uuid
@@ -55,6 +56,7 @@ class AdminTenantsViewModelTest {
       )
 
   @Test
+  @Fn(["M00.F01"])
   fun `load populates tenants without paging`() = runBlocking {
     var listCalled = false
     val vm =
@@ -77,6 +79,7 @@ class AdminTenantsViewModelTest {
   }
 
   @Test
+  @Fn(["M00.F01"])
   fun `load failure keeps empty and retryable`() = runBlocking {
     var reject = true
     val vm =
@@ -106,6 +109,7 @@ class AdminTenantsViewModelTest {
   }
 
   @Test
+  @Fn(["M00.F01"])
   fun `create appends row in place without reload`() = runBlocking {
     var listCalls = 0
     var received: CreateTenantRequest? = null
@@ -136,6 +140,7 @@ class AdminTenantsViewModelTest {
   }
 
   @Test
+  @Fn(["M00.F01"])
   fun `create conflict keeps list and retryable`() = runBlocking {
     var reject = true
     val vm =
@@ -167,6 +172,7 @@ class AdminTenantsViewModelTest {
   }
 
   @Test
+  @Fn(["M00.F01"])
   fun `update replaces row in place`() = runBlocking {
     var received: Pair<Uuid, UpdateTenantRequest>? = null
     val vm =
@@ -201,6 +207,7 @@ class AdminTenantsViewModelTest {
   }
 
   @Test
+  @Fn(["M00.F01"])
   fun `update status uses string enum`() = runBlocking {
     var receivedStatus: TenantStatus? = null
     val vm =
@@ -228,6 +235,7 @@ class AdminTenantsViewModelTest {
   }
 
   @Test
+  @Fn(["M00.F01"])
   fun `delete removes row in place`() = runBlocking {
     var deleted: Uuid? = null
     val vm =

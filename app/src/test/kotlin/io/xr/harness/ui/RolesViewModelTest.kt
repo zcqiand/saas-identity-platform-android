@@ -2,6 +2,7 @@
 
 package io.xr.harness.ui
 
+import io.xr.harness.Fn
 import io.xr.harness.core.AuthError
 import java.time.OffsetDateTime
 import kotlin.uuid.Uuid
@@ -74,6 +75,7 @@ class RolesViewModelTest {
       )
 
   @Test
+  @Fn(["M00.F03"])
   fun `load populates roles`() = runBlocking {
     var listed: String? = null
     val vm =
@@ -95,6 +97,7 @@ class RolesViewModelTest {
   }
 
   @Test
+  @Fn(["M00.F03"])
   fun `create appends row to list`() = runBlocking {
     var requested: CreateSysRoleRequest? = null
     val created = makeRole(Uuid.parse("c0000000-0000-0000-0000-000000000003"), "viewer", "Viewer")
@@ -130,6 +133,7 @@ class RolesViewModelTest {
   }
 
   @Test
+  @Fn(["M00.F03"])
   fun `update replaces row in place`() = runBlocking {
     var requested: Pair<String, saas.identity.shared.models.UpdateSysRoleRequest>? = null
     val vm =
@@ -165,6 +169,7 @@ class RolesViewModelTest {
   }
 
   @Test
+  @Fn(["M00.F03"])
   fun `set status replaces row both ways`() = runBlocking {
     var current: Int = 1
     val vm =
@@ -195,6 +200,7 @@ class RolesViewModelTest {
   }
 
   @Test
+  @Fn(["M00.F03"])
   fun `remove deletes row without response body`() = runBlocking {
     var removed: Pair<String, String>? = null
     val vm =
@@ -217,6 +223,7 @@ class RolesViewModelTest {
   }
 
   @Test
+  @Fn(["M00.F03"])
   fun `refresh replaces row with authoritative state`() = runBlocking {
     val vm =
         RolesViewModel(
@@ -238,6 +245,7 @@ class RolesViewModelTest {
   }
 
   @Test
+  @Fn(["M00.F03"])
   fun `lifecycle ops without tenant fail fast`() = runBlocking {
     var seamCalled = false
     val marked: () -> Unit = { seamCalled = true }
@@ -281,6 +289,7 @@ class RolesViewModelTest {
   }
 
   @Test
+  @Fn(["M00.F04"])
   fun `load grants populates grant aggregates`() = runBlocking {
     var requested: Pair<String, String>? = null
     val vm =
@@ -307,6 +316,7 @@ class RolesViewModelTest {
   }
 
   @Test
+  @Fn(["M00.F04"])
   fun `save grants sends full replacement and keeps response`() = runBlocking {
     var requested: Pair<String, List<String>>? = null
     val vm =
@@ -335,6 +345,7 @@ class RolesViewModelTest {
   }
 
   @Test
+  @Fn(["M00.F04"])
   fun `clear grants empties grant in place`() = runBlocking {
     var cleared: Pair<String, String>? = null
     val vm =
@@ -360,6 +371,7 @@ class RolesViewModelTest {
   }
 
   @Test
+  @Fn(["M00.F04"])
   fun `grant ops without tenant fail fast`() = runBlocking {
     var seamCalled = false
     val marked: () -> Unit = { seamCalled = true }
@@ -395,6 +407,7 @@ class RolesViewModelTest {
   }
 
   @Test
+  @Fn(["M00.F03"])
   fun `failure seam keeps list and reports retryable`() = runBlocking {
     var reject = true
     val vm =
@@ -444,6 +457,7 @@ class RolesViewModelTest {
   }
 
   @Test
+  @Fn(["M00.F04"])
   fun `clear grants without tenant keeps stale grants untouched`() = runBlocking {
     val vm =
         RolesViewModel(

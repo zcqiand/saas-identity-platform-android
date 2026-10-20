@@ -2,6 +2,7 @@
 
 package io.xr.harness.ui
 
+import io.xr.harness.Fn
 import io.xr.harness.core.AuthError
 import java.time.OffsetDateTime
 import kotlin.uuid.Uuid
@@ -62,6 +63,7 @@ class AdminClientsViewModelTest {
   }
 
   @Test
+  @Fn(["M04.F01"])
   fun `load populates clients without paging`() = runBlocking {
     var listCalled = false
     val vm =
@@ -84,6 +86,7 @@ class AdminClientsViewModelTest {
   }
 
   @Test
+  @Fn(["M04.F01"])
   fun `load failure keeps empty and retryable`() = runBlocking {
     var reject = true
     val vm =
@@ -114,6 +117,7 @@ class AdminClientsViewModelTest {
   }
 
   @Test
+  @Fn(["M04.F01"])
   fun `create appends row in place without reload`() = runBlocking {
     var listCalls = 0
     var received: CreateOAuthClientRequest? = null
@@ -154,6 +158,7 @@ class AdminClientsViewModelTest {
   }
 
   @Test
+  @Fn(["M04.F01"])
   fun `create failure keeps list and retryable`() = runBlocking {
     var reject = true
     val vm =
@@ -194,6 +199,7 @@ class AdminClientsViewModelTest {
   }
 
   @Test
+  @Fn(["M04.F01"])
   fun `update replaces row in place`() = runBlocking {
     var received: Pair<String, UpdateOAuthClientRequest>? = null
     val renamed = client(erpId, "erp", "ERP（改名后）")
@@ -229,6 +235,7 @@ class AdminClientsViewModelTest {
   }
 
   @Test
+  @Fn(["M04.F01"])
   fun `update failure keeps row and retryable`() = runBlocking {
     var reject = true
     val vm =
@@ -265,6 +272,7 @@ class AdminClientsViewModelTest {
   }
 
   @Test
+  @Fn(["M04.F01"])
   fun `delete removes row in place`() = runBlocking {
     var deleted: String? = null
     val vm =
@@ -286,6 +294,7 @@ class AdminClientsViewModelTest {
   }
 
   @Test
+  @Fn(["M04.F01"])
   fun `delete failure keeps row and retryable`() = runBlocking {
     var reject = true
     val vm =
@@ -315,6 +324,7 @@ class AdminClientsViewModelTest {
   }
 
   @Test
+  @Fn(["M04.F02"])
   fun `setStatus disable replaces row in place without reload`() = runBlocking {
     var listCalls = 0
     var received: Pair<String, Int>? = null
@@ -350,6 +360,7 @@ class AdminClientsViewModelTest {
   }
 
   @Test
+  @Fn(["M04.F02"])
   fun `setStatus enable passes one and replaces row`() = runBlocking {
     var receivedStatus: Int? = null
     val enabled = client(erpId, "erp", "企业资源计划系统", status = 1)
@@ -374,6 +385,7 @@ class AdminClientsViewModelTest {
   }
 
   @Test
+  @Fn(["M04.F02"])
   fun `setStatus failure keeps row and retryable`() = runBlocking {
     var reject = true
     val vm =

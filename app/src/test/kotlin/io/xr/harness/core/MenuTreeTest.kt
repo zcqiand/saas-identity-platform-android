@@ -2,6 +2,7 @@
 
 package io.xr.harness.core
 
+import io.xr.harness.Fn
 import java.time.OffsetDateTime
 import kotlin.uuid.Uuid
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -31,6 +32,7 @@ class MenuTreeTest {
       )
 
   @Test
+  @Fn(["M04.F04"])
   fun `zero-uuid parent and orphan both hang at root`() {
     val tree =
         buildMenuTree(
@@ -50,6 +52,7 @@ class MenuTreeTest {
   }
 
   @Test
+  @Fn(["M04.F04"])
   fun `null parent (wire-omitted root) hangs at root`() {
     // 2026-10-20 live 冒烟实证：后端平铺列表根节点整个省略 parentId（契约 required+nullable
     // 与 wire 不符），null 必须与零值哨兵同口径挂根。
@@ -60,6 +63,7 @@ class MenuTreeTest {
   }
 
   @Test
+  @Fn(["M04.F04"])
   fun `children nest under parent and sort by sortOrder then title`() {
     val parent = "00000000-0000-0000-0000-000000000001"
     val tree =
@@ -80,6 +84,7 @@ class MenuTreeTest {
   }
 
   @Test
+  @Fn(["M04.F04"])
   fun `grandchildren nest recursively`() {
     val parent = "00000000-0000-0000-0000-000000000001"
     val child = "00000000-0000-0000-0000-000000000002"
@@ -96,6 +101,7 @@ class MenuTreeTest {
   }
 
   @Test
+  @Fn(["M04.F04"])
   fun `empty list yields empty tree`() {
     assertEquals(emptyList<MenuNode>(), buildMenuTree(emptyList()))
   }
