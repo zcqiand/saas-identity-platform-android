@@ -87,6 +87,7 @@ fun AppRoot() {
   var showRoles by remember { mutableStateOf(false) }
   var showApplications by remember { mutableStateOf(false) }
   var showOauth by remember { mutableStateOf(false) }
+  var showTenants by remember { mutableStateOf(false) }
 
   // 启动自愈：持久化会话 whoami 校验，失败即清密回登录
   LaunchedEffect(Unit) { vm.restore() }
@@ -115,6 +116,8 @@ fun AppRoot() {
           ApplicationsScreen(onBack = { showApplications = false }, store = store, tokens = tokens)
         } else if (showOauth) {
           OAuthScreen(onBack = { showOauth = false }, store = store, tokens = tokens)
+        } else if (showTenants) {
+          TenantsScreen(onBack = { showTenants = false }, store = store, tokens = tokens)
         } else {
           AccountScreen(
               vm = vm,
@@ -129,6 +132,7 @@ fun AppRoot() {
                               NavEntry(label = "角色管理", onOpen = { showRoles = true }),
                               NavEntry(label = "租户应用", onOpen = { showApplications = true }),
                               NavEntry(label = "OAuth 授权码", onOpen = { showOauth = true }),
+                              NavEntry(label = "租户管理", onOpen = { showTenants = true }),
                           ),
                       onLogout = { scope.launch { vm.logout() } },
                   ),
