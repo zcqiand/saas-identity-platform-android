@@ -83,6 +83,7 @@ fun AppRoot() {
   val session by vm.session.collectAsState()
   val user by vm.user.collectAsState()
   var showMenus by remember { mutableStateOf(false) }
+  var showMembers by remember { mutableStateOf(false) }
 
   // 启动自愈：持久化会话 whoami 校验，失败即清密回登录
   LaunchedEffect(Unit) { vm.restore() }
@@ -103,13 +104,19 @@ fun AppRoot() {
     is SessionState.Ready ->
         if (showMenus) {
           MenusScreen(onBack = { showMenus = false }, store = store, tokens = tokens)
+        } else if (showMembers) {
+          MembersScreen(onBack = { showMembers = false }, store = store, tokens = tokens)
         } else {
           AccountScreen(
               vm = vm,
               ready = s,
               user = user,
-              onOpenMenus = { showMenus = true },
-              onLogout = { scope.launch { vm.logout() } },
+              nav =
+                  AccountNav(
+                      onOpenMenus = { showMenus = true },
+                      onOpenMembers = { showMembers = true },
+                      onLogout = { scope.launch { vm.logout() } },
+                  ),
           )
         }
   }
@@ -211,14 +218,20 @@ fun LoginScreen(vm: AuthViewModel, onReconfigure: () -> Unit) {
   }
 }
 
+/** 导航动作束（管理屏入口 + 登出，束形降参防 LongParameterList）。 */
+internal data class AccountNav(
+    val onOpenMenus: () -> Unit,
+    val onOpenMembers: () -> Unit,
+    val onLogout: () -> Unit,
+)
+
 /** 账户页（swift AccountView 同构）：当前用户 + 租户成员段（点选切换，当前带 ✓，busy 禁点防连击）。 */
 @Composable
-fun AccountScreen(
+private fun AccountScreen(
     vm: AuthViewModel,
     ready: SessionState.Ready,
     user: WhoamiUser?,
-    onOpenMenus: () -> Unit,
-    onLogout: () -> Unit,
+    nav: AccountNav,
 ) {
   val scope = rememberCoroutineScope()
   val phase by vm.phase.collectAsState()
@@ -265,10 +278,13 @@ fun AccountScreen(
       Text(text = failed.message, color = MaterialTheme.colorScheme.error)
     }
     Spacer(modifier = Modifier.height(16.dp))
-    Button(onClick = onOpenMenus, enabled = !busy, modifier = Modifier.fillMaxWidth()) {
+    Button(onClick = nav.onOpenMenus, enabled = !busy, modifier = Modifier.fillMaxWidth()) {
       Text(text = "菜单管理")
     }
-    Button(onClick = onLogout, enabled = !busy, modifier = Modifier.fillMaxWidth()) {
+    Button(onClick = nav.onOpenMembers, enabled = !busy, modifier = Modifier.fillMaxWidth()) {
+      Text(text = "成员管理")
+    }
+    Button(onClick = nav.onLogout, enabled = !busy, modifier = Modifier.fillMaxWidth()) {
       Text(text = "退出登录")
     }
   }
