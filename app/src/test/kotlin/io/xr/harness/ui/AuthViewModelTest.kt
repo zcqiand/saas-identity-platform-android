@@ -9,6 +9,7 @@ import io.xr.harness.core.SwitchOutcome
 import io.xr.harness.core.TenantItem
 import io.xr.harness.core.TokenStoring
 import io.xr.harness.core.WhoamiUser
+import java.time.OffsetDateTime
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNull
@@ -258,7 +259,10 @@ class AuthViewModelTest {
         AuthViewModel.Seams(
             switchTenant = { tenantId ->
               switchedTo = tenantId
-              SwitchOutcome.Success(tenantId = "t-2")
+              SwitchOutcome.Success(
+                  tenantId = "t-2",
+                  expiresAt = OffsetDateTime.parse("2023-11-14T22:13:20Z"),
+              )
             },
             whoami = { WhoamiUser("alice", "Alice", "t-2") },
         )
@@ -271,6 +275,11 @@ class AuthViewModelTest {
     assertEquals("t-2", switchedTo)
     assertEquals(SessionState.Ready(username = "alice", tenantId = "t-2"), vm.session.value)
     assertEquals("t-2", store.tenantId)
+    assertEquals(
+        OffsetDateTime.parse("2023-11-14T22:13:20Z"),
+        store.expiresAt,
+        "切租户入账须随响应记录过期时刻（swift adoptSwitch 同构）",
+    )
     assertEquals(WhoamiUser("alice", "Alice", "t-2"), vm.user.value)
     assertEquals(AuthPhase.Idle, vm.phase.value)
   }

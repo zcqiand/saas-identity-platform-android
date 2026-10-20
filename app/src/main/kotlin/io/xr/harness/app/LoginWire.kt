@@ -194,7 +194,7 @@ fun switchTenantSeam(
           val body = resp.body()
           tokens.accessToken = body.accessToken
           tokens.refreshToken = body.refreshToken
-          SwitchOutcome.Success(tenantId = body.tenantId.toString())
+          SwitchOutcome.Success(tenantId = body.tenantId.toString(), expiresAt = body.expiresAt)
         }
       } catch (e: Exception) {
         SwitchOutcome.Failure(AuthError.Unreachable(e))

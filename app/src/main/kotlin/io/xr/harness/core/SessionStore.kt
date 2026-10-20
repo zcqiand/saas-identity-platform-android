@@ -1,5 +1,7 @@
 package io.xr.harness.core
 
+import java.time.OffsetDateTime
+
 /**
  * 会话三态机（swift SessionStore 同构）：needsSetup → needsLogin → ready。 baseURL/clientId 为非机密配置，经可注入
  * PreferencesStore 持久化（App 层落 SharedPreferences）； token 经可注入 TokenStoring 持久化（App 层实现， Keystore
@@ -55,6 +57,16 @@ class SessionStore(private val prefs: PreferencesStore, private val tokens: Toke
   val tenantId: String?
     get() = prefs.getString(KEY_TENANT_ID)
 
+  /**
+   * 当前 token 过期时刻（swift expiresAt 同构，REQ-2026-002 Q2：仅作展示依据，本期不做主动过期刷新）。 ISO-8601 落 prefs；解析失败
+   * fail-closed 返 null（坏值不崩，与加密存储同姿态）。
+   */
+  val expiresAt: OffsetDateTime?
+    get() =
+        prefs.getString(KEY_EXPIRES_AT)?.let {
+          runCatching { OffsetDateTime.parse(it) }.getOrNull()
+        }
+
   val hasToken: Boolean
     get() = tokens.loadAccess() != null
 
@@ -96,24 +108,38 @@ class SessionStore(private val prefs: PreferencesStore, private val tokens: Toke
 
   /**
    * 收编 OAuth token 结果（swift adoptOAuthToken 同构，M04.F03）：换码/刷新 grant 成功后入账。 仅登录态可入账（未登录即抛，拒绝静默 建立
-   * token 对）； 空 access 即抛保持旧 token 对； 成功则换 token 对并对齐 token 所带租户（密码登录租户可空，OAuth token 租户必有）。
-   * android store 不追踪 expiresAt（swift 有）——到期刷新由调用方按需触发，此差异登记在案。
+   * token 对）； 空 access 即抛保持旧 token 对； 成功则换 token 对、对齐 token 所带租户并记录 expiresAt = now + expiresIn。
    */
-  fun adoptOAuthToken(accessToken: String, refreshToken: String?, tenantId: String) {
+  fun adoptOAuthToken(
+      accessToken: String,
+      refreshToken: String?,
+      tenantId: String,
+      expiresIn: Int,
+  ) {
     check(state is SessionState.Ready) { "未登录状态拒绝入账 OAuth token" }
     check(accessToken.isNotBlank()) { "OAuth 入账 access token 不能为空" }
     tokens.save(accessToken, refreshToken)
     prefs.putString(KEY_TENANT_ID, tenantId)
+    prefs.putString(KEY_EXPIRES_AT, OffsetDateTime.now().plusSeconds(expiresIn.toLong()).toString())
   }
 
-  /** 切租户收编（swift adoptSwitch 同位，仅身份位）：token 对已由 seam 直写 TokenHolder，core 不持内存 token。 */
-  fun adoptTenant(tenantId: String) {
+  /**
+   * 切租户收编（swift adoptSwitch 同位）：身份位 + 过期时刻（SwitchTenantResponse.expiresAt）；token 对已由 seam 直写
+   * TokenHolder。
+   */
+  fun adoptTenant(tenantId: String, expiresAt: OffsetDateTime? = null) {
     prefs.putString(KEY_TENANT_ID, tenantId)
+    if (expiresAt != null) {
+      prefs.putString(KEY_EXPIRES_AT, expiresAt.toString())
+    } else {
+      prefs.remove(KEY_EXPIRES_AT)
+    }
   }
 
   fun clearSession() {
     prefs.remove(KEY_USERNAME)
     prefs.remove(KEY_TENANT_ID)
+    prefs.remove(KEY_EXPIRES_AT)
     tokens.save(null, null)
   }
 
@@ -122,5 +148,6 @@ class SessionStore(private val prefs: PreferencesStore, private val tokens: Toke
     const val KEY_CLIENT_ID = "session.clientId"
     const val KEY_USERNAME = "session.username"
     const val KEY_TENANT_ID = "session.tenantId"
+    const val KEY_EXPIRES_AT = "session.expiresAt"
   }
 }

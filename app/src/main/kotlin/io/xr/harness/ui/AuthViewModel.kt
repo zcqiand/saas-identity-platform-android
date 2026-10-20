@@ -124,7 +124,7 @@ class AuthViewModel(
         }
     return when (outcome) {
       is SwitchOutcome.Success -> {
-        store.adoptTenant(outcome.tenantId)
+        store.adoptTenant(outcome.tenantId, outcome.expiresAt)
         _session.value = store.state
         refreshUser()
         _phase.value = AuthPhase.Idle

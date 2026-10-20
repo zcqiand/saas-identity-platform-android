@@ -100,7 +100,12 @@ class OAuthViewModel(
     val code = _lastCode.value ?: return failFast("尚无授权码，请先签发")
     return runOp("换码失败") {
       val token = seams.exchangeCode(code, clientId, REDIRECT_URI)
-      store.adoptOAuthToken(token.accessToken, token.refreshToken, token.tenantId.toString())
+      store.adoptOAuthToken(
+          token.accessToken,
+          token.refreshToken,
+          token.tenantId.toString(),
+          token.expiresIn,
+      )
     }
   }
 
@@ -112,7 +117,12 @@ class OAuthViewModel(
             ?: return failFast("尚无 refresh token，请先换 token")
     return runOp("刷新 token 失败") {
       val token = seams.refreshToken(current, clientId)
-      store.adoptOAuthToken(token.accessToken, token.refreshToken, token.tenantId.toString())
+      store.adoptOAuthToken(
+          token.accessToken,
+          token.refreshToken,
+          token.tenantId.toString(),
+          token.expiresIn,
+      )
     }
   }
 

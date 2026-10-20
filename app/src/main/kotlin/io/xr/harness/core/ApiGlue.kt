@@ -5,6 +5,7 @@ import io.ktor.client.plugins.auth.Auth
 import io.ktor.client.plugins.auth.providers.BearerTokens
 import io.ktor.client.plugins.auth.providers.bearer
 import io.ktor.http.HttpStatusCode
+import java.time.OffsetDateTime
 import kotlinx.serialization.json.Json
 import saas.identity.shared.models.ErrorResponse
 
@@ -45,9 +46,9 @@ data class WhoamiUser(val username: String, val displayName: String?, val tenant
 /** 租户成员归一展示位（swift 账户页租户段行同构）：saas 成员关系无租户名，name 富化归 admin 刀。 */
 data class TenantItem(val tenantId: String, val name: String?, val detail: String?)
 
-/** 切租户归一结果：token 对由 seam 直写 TokenHolder（core 不持内存 token），VM 只收编身份位。 */
+/** 切租户归一结果：token 对由 seam 直写 TokenHolder（core 不持内存 token），VM 收编身份位 + 过期时刻。 */
 sealed interface SwitchOutcome {
-  data class Success(val tenantId: String) : SwitchOutcome
+  data class Success(val tenantId: String, val expiresAt: OffsetDateTime) : SwitchOutcome
 
   data class Failure(val error: AuthError) : SwitchOutcome
 }

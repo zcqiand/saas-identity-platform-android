@@ -136,6 +136,7 @@ private fun TokenSection(
     MonospaceRow(label = "refreshToken", value = store.refreshToken)
     MonospaceRow(label = "scope", value = OAuthViewModel.DEFAULT_SCOPE)
     MonospaceRow(label = "tenantId", value = store.tenantId ?: "—")
+    MonospaceRow(label = "expiresAt", value = store.expiresAt?.toString() ?: "—")
   } else {
     Text(text = "尚未入账", color = MaterialTheme.colorScheme.onSurfaceVariant)
   }

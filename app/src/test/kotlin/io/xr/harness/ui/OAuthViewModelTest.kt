@@ -8,6 +8,7 @@ import kotlin.uuid.Uuid
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
@@ -169,6 +170,30 @@ class OAuthViewModelTest {
     assertEquals("tk-2", tokens.access)
     assertEquals("rt-2", tokens.refresh)
     assertEquals(tenantB.toString(), store.tenantId, "OAuth 入账须对齐 token 所带租户")
+  }
+
+  @Test
+  fun `exchange records expiresAt in store`() = runBlocking {
+    val prefs = MemPrefs()
+    val tokens = MemTokens()
+    val store = makeStore(prefs, tokens)
+    val vm =
+        OAuthViewModel(
+            store = store,
+            seams =
+                OAuthViewModel.Seams(
+                    authorize = { _, _, _, state ->
+                      OAuthAuthorize200Response(code = "auth-code-1", state = state)
+                    },
+                    exchangeCode = { _, _, _ -> token("tk-2", "rt-2") },
+                ),
+        )
+    vm.authorize()
+
+    val ok = vm.exchangeCode()
+
+    assertTrue(ok)
+    assertNotNull(store.expiresAt, "换码入账必须记录过期时刻（token.expiresIn=3600）")
   }
 
   @Test
