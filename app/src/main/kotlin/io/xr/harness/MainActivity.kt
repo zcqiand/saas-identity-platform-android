@@ -29,8 +29,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
+import io.xr.harness.app.EncryptedTokenStore
+import io.xr.harness.app.KeystoreTokenCipher
 import io.xr.harness.app.SharedPreferencesStore
-import io.xr.harness.app.SharedPreferencesTokenStore
 import io.xr.harness.app.listTenantsSeam
 import io.xr.harness.app.loginSeam
 import io.xr.harness.app.logoutSeam
@@ -58,7 +59,10 @@ class MainActivity : ComponentActivity() {
 fun AppRoot() {
   val context = LocalContext.current
   val prefsStore = remember { SharedPreferencesStore(context) }
-  val tokenStore = remember { SharedPreferencesTokenStore(context) }
+  // token 加密持久化（swift KeychainTokenStore 对位）：AndroidKeyStore AES-GCM，密文落独立 prefs
+  val tokenStore = remember {
+    EncryptedTokenStore(SharedPreferencesStore(context, "session.tokens"), KeystoreTokenCipher())
+  }
   // 持久化 token 启动预载进内存持有（ktor bearer 插件读 TokenHolder）
   val tokens = remember {
     TokenHolder().also {
