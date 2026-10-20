@@ -6,19 +6,13 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -37,34 +31,19 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import io.xr.harness.app.SharedPreferencesStore
 import io.xr.harness.app.SharedPreferencesTokenStore
-import io.xr.harness.app.clientsListSeam
 import io.xr.harness.app.listTenantsSeam
 import io.xr.harness.app.loginSeam
 import io.xr.harness.app.logoutSeam
-import io.xr.harness.app.menusCreateSeam
-import io.xr.harness.app.menusDeleteSeam
-import io.xr.harness.app.menusListSeam
-import io.xr.harness.app.menusMoveSeam
-import io.xr.harness.app.menusReorderSeam
-import io.xr.harness.app.menusUpdateSeam
 import io.xr.harness.app.switchTenantSeam
 import io.xr.harness.app.whoamiSeam
 import io.xr.harness.core.ApiGlue
-import io.xr.harness.core.MenuNode
 import io.xr.harness.core.SessionState
 import io.xr.harness.core.SessionStore
 import io.xr.harness.core.TokenHolder
 import io.xr.harness.core.WhoamiUser
 import io.xr.harness.ui.AuthPhase
 import io.xr.harness.ui.AuthViewModel
-import io.xr.harness.ui.ClientsViewModel
-import io.xr.harness.ui.MenusViewModel
 import kotlinx.coroutines.launch
-import saas.identity.shared.models.CreateSysMenuRequest
-import saas.identity.shared.models.OAuthClient
-import saas.identity.shared.models.SysMenu
-import saas.identity.shared.models.SysMenuType
-import saas.identity.shared.models.UpdateSysMenuRequest
 
 /** 三态路由（swift App 层同构）：needsSetup → 配置表单 / needsLogin → 登录表单 / ready → 账户。 */
 class MainActivity : ComponentActivity() {
@@ -293,223 +272,4 @@ fun AccountScreen(
       Text(text = "退出登录")
     }
   }
-}
-
-@Composable
-fun MenusScreen(onBack: () -> Unit, store: SessionStore, tokens: TokenHolder) {
-  val scope = rememberCoroutineScope()
-  val st = rememberMenusState(store, tokens)
-  val clients by st.clientsVm.clients.collectAsState()
-  val phase by st.menusVm.phase.collectAsState()
-  val busy = phase is MenusViewModel.Phase.Busy
-  var createTitle by remember { mutableStateOf("") }
-  var renaming by remember { mutableStateOf<SysMenu?>(null) }
-  var renameTitle by remember { mutableStateOf("") }
-
-  Column(modifier = Modifier.fillMaxSize().padding(24.dp)) {
-    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-      Button(onClick = onBack, enabled = !busy) { Text(text = "返回") }
-      Text(text = "菜单管理", style = MaterialTheme.typography.headlineMedium)
-    }
-    Spacer(modifier = Modifier.height(8.dp))
-    MenusClientPicker(
-        clients = clients,
-        selected = st.selectedClient,
-        busy = busy,
-        onSelect = { c ->
-          st.selectClient(c)
-          scope.launch { st.menusVm.load(c) }
-        },
-    )
-    Spacer(modifier = Modifier.height(8.dp))
-    MenusCreateRow(
-        title = createTitle,
-        busy = busy,
-        onTitleChange = { createTitle = it },
-        onCreate = {
-          val t = createTitle
-          scope.launch {
-            if (st.menusVm.create(CreateSysMenuRequest(title = t, type = SysMenuType.menu))) {
-              createTitle = ""
-            }
-          }
-        },
-    )
-    (phase as? MenusViewModel.Phase.Failed)?.let { failed ->
-      Spacer(modifier = Modifier.height(8.dp))
-      Text(text = failed.message, color = MaterialTheme.colorScheme.error)
-    }
-    Spacer(modifier = Modifier.height(8.dp))
-    MenusTree(
-        tree = st.menusVm.tree,
-        busy = busy,
-        onRename = { m ->
-          renaming = m
-          renameTitle = m.title
-        },
-        onDelete = { m -> scope.launch { st.menusVm.deleteMenu(m.id.toString()) } },
-    )
-  }
-
-  renaming?.let { target ->
-    MenusRenameDialog(
-        target = target,
-        title = renameTitle,
-        onTitleChange = { renameTitle = it },
-        onConfirm = {
-          scope.launch {
-            if (
-                st.menusVm.update(
-                    target.id.toString(),
-                    UpdateSysMenuRequest(title = renameTitle),
-                )
-            ) {
-              renaming = null
-            }
-          }
-        },
-        onDismiss = { renaming = null },
-    )
-  }
-}
-
-/** client 选择器（AdminClients 只读子集；全量清单不传分页）。 */
-@Composable
-private fun MenusClientPicker(
-    clients: List<OAuthClient>,
-    selected: String?,
-    busy: Boolean,
-    onSelect: (String) -> Unit,
-) {
-  var open by remember { mutableStateOf(false) }
-  Box {
-    TextButton(onClick = { open = true }, enabled = !busy) {
-      Text(text = "客户端：${selected ?: "加载中…"}")
-    }
-    DropdownMenu(expanded = open && clients.isNotEmpty(), onDismissRequest = { open = false }) {
-      clients.forEach { c ->
-        DropdownMenuItem(
-            text = { Text(text = "${c.clientName}（${c.clientId}）") },
-            onClick = { onSelect(c.clientId) },
-        )
-      }
-    }
-  }
-}
-
-/** 树递归行：标题 + 类型/排序副行 + 改名/删除。 */
-@Composable
-private fun menuNodeRows(
-    node: MenuNode,
-    depth: Int,
-    busy: Boolean,
-    onRename: (SysMenu) -> Unit,
-    onDelete: (SysMenu) -> Unit,
-) {
-  val m = node.menu
-  Column(modifier = Modifier.fillMaxWidth().padding(start = (depth * 16).dp, top = 4.dp)) {
-    Text(text = m.title, style = MaterialTheme.typography.bodyLarge)
-    Text(
-        text = "${m.type} · 排序 ${m.sortOrder}" + if (m.status == 1) "" else " · 停用",
-        style = MaterialTheme.typography.bodySmall,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-    )
-    Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-      TextButton(onClick = { onRename(m) }, enabled = !busy) { Text(text = "改名") }
-      TextButton(onClick = { onDelete(m) }, enabled = !busy) { Text(text = "删除") }
-    }
-  }
-  node.children.forEach { child -> menuNodeRows(child, depth + 1, busy, onRename, onDelete) }
-}
-
-/** 新建行：标题输入 + 建到根（parentId 缺省 = 根）。 */
-@Composable
-private fun MenusCreateRow(
-    title: String,
-    busy: Boolean,
-    onTitleChange: (String) -> Unit,
-    onCreate: () -> Unit,
-) {
-  Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-    OutlinedTextField(
-        value = title,
-        onValueChange = onTitleChange,
-        label = { Text(text = "新菜单标题（建到根）") },
-        modifier = Modifier.weight(1f),
-        singleLine = true,
-    )
-    Button(onClick = onCreate, enabled = !busy && title.isNotBlank()) { Text(text = "新建") }
-  }
-}
-
-/** 改名对话框（部分请求 update：只提交 title）。 */
-@Composable
-private fun MenusRenameDialog(
-    target: SysMenu,
-    title: String,
-    onTitleChange: (String) -> Unit,
-    onConfirm: () -> Unit,
-    onDismiss: () -> Unit,
-) {
-  AlertDialog(
-      onDismissRequest = onDismiss,
-      title = { Text(text = "改名：${target.title}") },
-      text = { OutlinedTextField(value = title, onValueChange = onTitleChange, singleLine = true) },
-      confirmButton = {
-        Button(onClick = onConfirm, enabled = title.isNotBlank()) { Text(text = "保存") }
-      },
-      dismissButton = { TextButton(onClick = onDismiss) { Text(text = "取消") } },
-  )
-}
-
-/** 树只读渲染（递归缩进；改名/删除回调上抛）。 */
-@Composable
-private fun MenusTree(
-    tree: List<MenuNode>,
-    busy: Boolean,
-    onRename: (SysMenu) -> Unit,
-    onDelete: (SysMenu) -> Unit,
-) {
-  LazyColumn(modifier = Modifier.fillMaxWidth()) {
-    tree.forEach { root ->
-      item(key = root.menu.id.toString()) { menuNodeRows(root, 0, busy, onRename, onDelete) }
-    }
-  }
-}
-
-/** 菜单页控制器束：双 VM 接线 + 首选 client 自动装载。 */
-private class MenusState(
-    val clientsVm: ClientsViewModel,
-    val menusVm: MenusViewModel,
-    val selectedClient: String?,
-    val selectClient: (String) -> Unit,
-)
-
-@Composable
-private fun rememberMenusState(store: SessionStore, tokens: TokenHolder): MenusState {
-  val clientsVm = remember {
-    ClientsViewModel(ClientsViewModel.Seams(listClients = clientsListSeam(store, tokens)))
-  }
-  val menusVm = remember {
-    MenusViewModel(
-        MenusViewModel.Seams(
-            listMenus = menusListSeam(store, tokens),
-            createMenu = menusCreateSeam(store, tokens),
-            updateMenu = menusUpdateSeam(store, tokens),
-            moveMenu = menusMoveSeam(store, tokens),
-            reorderMenus = menusReorderSeam(store, tokens),
-            deleteMenu = menusDeleteSeam(store, tokens),
-        ),
-    )
-  }
-  var selectedClient by remember { mutableStateOf<String?>(null) }
-
-  LaunchedEffect(Unit) {
-    clientsVm.load()
-    clientsVm.clients.value.firstOrNull()?.let { c ->
-      selectedClient = c.clientId
-      menusVm.load(c.clientId)
-    }
-  }
-  return MenusState(clientsVm, menusVm, selectedClient, { c -> selectedClient = c })
 }
