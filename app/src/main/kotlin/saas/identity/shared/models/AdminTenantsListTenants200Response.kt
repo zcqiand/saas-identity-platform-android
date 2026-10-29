@@ -33,8 +33,8 @@ import kotlinx.serialization.Contextual
  * 
  *
  * @param items 
- * @param page 
- * @param pageSize 
+ * @param page 页码，0 基（Spring Data Pageable）：首页 page=0。
+ * @param pageSize 每页条数。
  * @param total 
  */
 @Serializable
@@ -44,9 +44,11 @@ data class AdminTenantsListTenants200Response (
     @SerialName(value = "items")
     val items: kotlin.collections.List<Tenant>,
 
+    /* 页码，0 基（Spring Data Pageable）：首页 page=0。 */
     @SerialName(value = "page")
     val page: kotlin.Int,
 
+    /* 每页条数。 */
     @SerialName(value = "pageSize")
     val pageSize: kotlin.Int,
 
