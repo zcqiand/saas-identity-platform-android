@@ -9,3 +9,6 @@ local.properties
 .state/tree-change.json
 .kotlin/
 .openapi-tmp/
+
+# 可再生件（正式区/临时区纪律：过程件进 _work/，_work 整体不入库；2026-10-24 人裁）
+_work/
