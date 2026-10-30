@@ -148,9 +148,9 @@ import io.ktor.http.ParametersBuilder
         /**
         * GET /api/v1/admin/tenants
         * 
-        * 
-         * @param page 页码，0 基（Spring Data Pageable）：首页 page&#x3D;0。 (optional)
-         * @param pageSize 每页条数。 (optional)
+        * 分页：page 0 基（Spring Data Pageable），首页 page&#x3D;0；pageSize 每页条数。
+         * @param page  (optional)
+         * @param pageSize  (optional)
          * @return AdminTenantsListTenants200Response
         */
             @Suppress("UNCHECKED_CAST")
